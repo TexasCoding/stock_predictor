@@ -1,3 +1,5 @@
+# src/stock_predictor/stock_module/stock_history.py
+# Description: Class to retrieve stock history data from yfinance and local database.
 import pandas as pd
 import requests
 from typing import Optional

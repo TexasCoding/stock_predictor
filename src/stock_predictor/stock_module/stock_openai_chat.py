@@ -1,3 +1,5 @@
+# src/stock_predictor/stock_module/stock_openai_chat.py
+# Description: Class to interact with the OpenAI API for sentiment analysis.
 import os
 import re
 from typing import Any, Dict, List

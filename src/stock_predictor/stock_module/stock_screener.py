@@ -1,3 +1,5 @@
+# src/stock_predictor/stock_module/stock_screener.py
+# Description: Class to filter stocks based on technical indicators, recommendations, and predictions.
 import json
 import os
 from typing import Dict, List, Optional

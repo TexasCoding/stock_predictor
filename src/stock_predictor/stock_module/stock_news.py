@@ -1,5 +1,5 @@
-# src/stock_trader/yahoo_module/yahoo_news.py
-# The YahooNews class is used to retrieve news articles related to a stock symbol.
+# src/stock_predictor/stock_module/stock_news.py
+# Description: Class to retrieve news articles related to a stock symbol.
 import textwrap
 import time
 from typing import Dict, List

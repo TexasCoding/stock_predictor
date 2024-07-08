@@ -1,5 +1,5 @@
-# # src/stock_trader/stock_module/stock_tickers.py
-# # This module contains the StockTickers class, which is used to retrieve and store stock tickers in the database.
+# src/stock_predictor/stock_module/stock_tickers.py
+# Description: Class to retrieve and manage stock tickers from Alpaca and Yahoo Finance.
 import json
 from typing import List
 import requests

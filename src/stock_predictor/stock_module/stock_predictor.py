@@ -1,3 +1,5 @@
+# src/stock_predictor/stock_module/stock_predictor.py
+# Description: Class to predict stock prices using LSTM neural network.
 import os
 from typing import Optional
 import numpy as np

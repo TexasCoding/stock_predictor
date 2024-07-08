@@ -1,3 +1,5 @@
+# src/stock_predictor/stock_module/stock_technicals.py
+# Description: Class to retrieve technical indicators for a given stock symbol based on historical data.
 from stock_predictor.global_settings import logger
 import pandas as pd
 from stock_predictor.stock_module.stock_base import StockBase

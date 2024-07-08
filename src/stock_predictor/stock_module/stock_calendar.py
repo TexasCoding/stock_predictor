@@ -1,3 +1,5 @@
+# src/stock_predictor/stock_module/stock_calendar.py
+# Description: Class to retrieve trading calendar dates from Alpaca API.
 from stock_predictor.global_settings import (
     ALPACA_API_KEY,
     ALPACA_SECRET_KEY,

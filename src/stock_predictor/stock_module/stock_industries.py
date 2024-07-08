@@ -1,5 +1,5 @@
-# # src/stock_trader/stock_module/stock_industries.py
-# # This module contains the Industries class, which is used to retrieve and calculate various metrics for different industries.
+# src/stock_trader/stock_module/stock_industries.py
+# This module contains the Industries class, which is used to retrieve and calculate various metrics for different industries.
 import os
 import pandas as pd
 from stock_predictor.stock_module.stock_base import StockBase
