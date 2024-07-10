@@ -196,9 +196,9 @@ class StockPredictor(StockBase):
         y_predicted_transformed = np.append(y_predicted_transformed, last_seq)
         copy_df["predicted_vwap"] = y_predicted_transformed
 
-        date_now = self.calendar.future_dates.next_day1
-        date_tomorrow = self.calendar.future_dates.next_day2
-        date_after_tomorrow = self.calendar.future_dates.next_day3
+        date_now = self.calendar.todays_date
+        date_tomorrow = self.calendar.future_dates.next_day1
+        date_after_tomorrow = self.calendar.future_dates.next_day2
 
         copy_df.loc[date_now] = [
             copy_df["vwap"].iloc[-1],

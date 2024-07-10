@@ -2,8 +2,9 @@
 # Description: Class to filter stocks based on technical indicators, recommendations, and predictions.
 import json
 import os
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 
+import pandas as pd
 import requests
 from stock_predictor.global_settings import (
     BASE_URL,
@@ -48,7 +49,7 @@ class StockScreener:
     # This method is used to filter tickers based on
     # technical indicators, recommendations, and predictions.
     ########################################################
-    def filter_tickers(self) -> List[Dict[str, str]]:
+    def filter_tickers(self) -> Tuple[List[Dict[str, str]], pd.DataFrame]:
         """
         Filters the list of tickers based on technical indicators, recommendations, TensorFlow predictions, and news sentiment analysis.
 
@@ -72,9 +73,12 @@ class StockScreener:
                     status=status,
                     message=FILTER_PREDICTIONS,
                     count_len=filtered_count,
+                    symbol=ticker,
                 )
                 # Filter ticker based on AI predictions.
-                prediction = self._filter_ticker_prediction(ticker=ticker)
+                prediction, prediction_df = self._filter_ticker_prediction(
+                    ticker=ticker
+                )
                 if prediction:
                     self.status_update(
                         status=status,
@@ -88,7 +92,7 @@ class StockScreener:
                         # Append predicted ticker to list.
                         self.filtered_predicted_tickers.append(prediction)
 
-        return self.filtered_predicted_tickers
+        return self.filtered_predicted_tickers, prediction_df
 
     ########################################################
     # This method is used to update the status message.
@@ -224,7 +228,9 @@ class StockScreener:
     # This method is used to filter tickers based on
     # predictions.
     ########################################################
-    def _filter_ticker_prediction(self, ticker: str) -> Optional[Dict[str, str]]:
+    def _filter_ticker_prediction(
+        self, ticker: str
+    ) -> Tuple[Optional[Dict[str, str]], pd.DataFrame]:
         """
         Filters the ticker prediction based on certain criteria.
 
@@ -240,7 +246,7 @@ class StockScreener:
             return None
 
         stock_predictor = StockPredictor(symbol=ticker, data_df=history)
-        prediction_df = stock_predictor.ExecuteModel()
+        prediction_df = stock_predictor.execute_model()
 
         pred_df = prediction_df.tail(4)
         prediction_max = round(pred_df.tail(3)["predicted_vwap"].max(), 2)
@@ -249,14 +255,14 @@ class StockScreener:
         future_goal = round(current_vwap * 1.03, 2)
 
         if prediction_max >= future_goal:
-            StockCharts().plot_prediction_chart(prediction_df.tail(50))
+            StockCharts().plot_prediction_chart(prediction_df.tail(100))
             # stock_predictor.plot_chart(prediction_df)
             return {
                 "symbol": ticker,
                 "open_price": current_close,
                 "take_price": round(current_close * 1.03, 2),
-            }
-        return None
+            }, prediction_df
+        return None, pd.DataFrame()
 
     def _add_predicted_to_db(self, predicted_dict: Dict[str, str]) -> None:
         """
@@ -276,3 +282,12 @@ class StockScreener:
             ),
         )
         response.raise_for_status()
+
+
+# if __name__ == "__main__":
+#     screener = StockScreener()
+#     filtered_tickers, prediction_df = screener.filter_tickers()
+#     print(filtered_tickers)
+#     print(prediction_df)
+#     print(len(filtered_tickers))
+#     print(len(prediction_df))

@@ -31,8 +31,10 @@ logger = logging.getLogger(__name__)
 
 FILTER_TECHNICALS = "Filtering {start_count} stocks for technicals..."
 FILTER_RECOMMENDATIONS = "Filtering {start_count} stocks for recommendations..."
-FILTER_PREDICTIONS = "Filtering {start_count} stocks for predictions..."
-FILTER_NEWS = "Filtering {start_count} stocks for news..."
+FILTER_PREDICTIONS = (
+    "Predicting {symbol} for future gains, {start_count} stocks left to scan..."
+)
+FILTER_NEWS = "Filtering news for {symbol} with Openai..."
 
 
 def chunk_list(seq: list, size: int) -> list[list]:

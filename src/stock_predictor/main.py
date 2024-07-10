@@ -1,12 +1,18 @@
-# from stock_predictor.stock_module.stock_screener import StockScreener
-# from stock_predictor.stock_module.stock_data import StockData
+from stock_predictor.stock_module.stock_screener import StockScreener
+from stock_predictor.stock_module.stock_data import StockData
 
-# # StockData().add_stored_tickers_to_db()
+# StockData().add_stored_tickers_to_db()
 
 # stock_screener = StockScreener()
-# filtered_tickers = stock_screener.filter_tickers()
+# filtered_tickers, filtered_tickers_df = stock_screener.filter_tickers()
 
-# print(filtered_tickers)
+if __name__ == "__main__":
+    StockData().add_stored_tickers_to_db()
+    stock_screener = StockScreener()
+    filtered_tickers, filtered_tickers_df = stock_screener.filter_tickers()
+    print(filtered_tickers)
+    print(filtered_tickers_df)
+
 
 # from stock_predictor.stock_module.stock_calendar import StockCalendar
 
