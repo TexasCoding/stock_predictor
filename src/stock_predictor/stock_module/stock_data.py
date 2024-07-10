@@ -18,7 +18,9 @@ class StockData:
         self.stock_history = StockHistory()
         self.base_url = BASE_URL
 
-    def get_stock_data(self, symbol: str) -> pd.DataFrame:
+    def get_stock_data(
+        self, symbol: str, start: str = None, end: str = None
+    ) -> pd.DataFrame:
         """Retrieve daily stock history for a given symbol.
 
         Args:
@@ -27,18 +29,36 @@ class StockData:
         Returns:
             pd.DataFrame: DataFrame containing stock history.
         """
-        return self.stock_history.daily_history(symbol)
+        return self.stock_history.daily_history(symbol=symbol, start=start, end=end)
 
     def add_stored_tickers_to_db(self) -> None:
         """Add stored tickers to the database."""
         try:
-            stock_industries = StockIndustries(0.4)
+            stock_industries = StockIndustries(0.6)
             industries = stock_industries.industry_avg_df()
             stock_tickers = StockTickers()
             tickers = stock_tickers.get_profitable_tickers(industry_avg_df=industries)
             self._add_tickers_to_db(tickers)
         except Exception as e:
             logger.error(f"Error: {e}")
+
+    def check_ticker_in_db(self, symbol: str):
+        """Check if a ticker is already in the database.
+
+        Args:
+            symbol (str): The stock symbol.
+
+        Returns:
+            bool: True if the ticker is in the database, False otherwise.
+        """
+        history = StockHistory().local_daily_history(symbol)
+
+        if history.empty:
+            return False
+
+        # print(pendulum.parse(history["date"].iloc[-1].strftime('%Y-%m-%d')).add(days=1).strftime('%Y-%m-%d'))
+
+        return history["date"].iloc[-1]
 
     def _add_tickers_to_db(self, tickers: List[str]) -> None:
         """Helper function to add tickers to the database.
@@ -63,7 +83,20 @@ class StockData:
         Args:
             symbol (str): The stock symbol.
         """
-        stock_data = self.get_stock_data(symbol)
+        update_ticker = self.check_ticker_in_db(symbol)
+
+        if update_ticker is not False:
+            # print(f"LATEST DATE: {update_ticker}")
+            # print(f"LAST TRADE DATE: {self.stock_history.calendar.last_trade_date}")
+            if str(update_ticker) == str(self.stock_history.calendar.last_trade_date):
+                logger.info(f"Stock data for {symbol} is up to date.")
+                update_ticker = self.stock_history.calendar.last_trade_date
+            # print(f"LATEST DATE: {self.stock_history.calendar.last_trade_date}")
+            stock_data = self.get_stock_data(
+                symbol, start=self.stock_history.calendar.last_trade_date
+            )
+        else:
+            stock_data = self.get_stock_data(symbol)
         post_list = self._prepare_stock_data_for_db(symbol, stock_data)
 
         try:
@@ -87,6 +120,9 @@ class StockData:
         Returns:
             List[dict]: List of dictionaries containing stock data.
         """
+        if stock_data.empty:
+            return []
+
         post_list = []
         for _, row in stock_data.iterrows():
             post_list.append(
@@ -101,6 +137,7 @@ class StockData:
                     "vwap": row.get("vwap", None),  # Use `get` to handle missing vwap
                 }
             )
+            print(post_list)
         return post_list
 
 

@@ -44,7 +44,7 @@ class StockBase:
         )
         self.logger = logger
 
-        self.calendar: Dates = StockCalendar().calender()
+        self.calendar: Dates = StockCalendar().calendar()
         self.stock_sorter_check = stock_sorter_check
         self.industry_sorter_check = industry_sorter_check
         self.base_url = BASE_URL

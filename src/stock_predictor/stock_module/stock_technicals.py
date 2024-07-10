@@ -6,13 +6,50 @@ from stock_predictor.stock_module.stock_base import StockBase
 
 from ta.momentum import RSIIndicator
 from ta.volatility import BollingerBands
-from ta.trend import SMAIndicator
+from ta.trend import SMAIndicator, EMAIndicator
+
+WINDOW = 40
 
 
 class StockTechnicals(StockBase):
     def __init__(self) -> None:
         super().__init__()
 
+    ###############################################################
+    # Check for Tradeable
+    ###############################################################
+    def check_for_tradeable(self, df: pd.DataFrame) -> bool:
+        """
+        Check if the given DataFrame has tradeable conditions based on specific technical indicators.
+
+        Args:
+            df (pd.DataFrame): DataFrame containing historical data with added technical indicators columns.
+
+        Returns:
+            bool: True if the conditions for a tradeable asset are met, False otherwise.
+        """
+        data_df = self.add_technicals_to_df(df)
+
+        if data_df.empty:
+            return False
+
+        # Get the last row of the DataFrame
+        yesterday = data_df.iloc[-1]
+
+        # Check the conditions in a single detailed conditional statement
+        is_tradeable = (
+            yesterday["wae_uptrend"] == 1
+            and float(yesterday["rsi40"]) < 70.0
+            and yesterday["bbhi40"] == 0
+            and yesterday["bblo40"] == 0
+            and yesterday["sma40"] < yesterday["vwap"]
+        )
+
+        return is_tradeable
+
+    ###############################################################
+    # Check for Overbought
+    ###############################################################
     @staticmethod
     def check_for_overbought(history: pd.DataFrame, window: int) -> pd.DataFrame:
         """
@@ -32,6 +69,42 @@ class StockTechnicals(StockBase):
 
         return history_df
 
+    ###############################################################
+    # Add Technicals to DataFrame
+    ###############################################################
+    def add_technicals_to_df(self, df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Add technical indicators to the DataFrame.
+
+        Args:
+            df (pd.DataFrame): DataFrame containing historical data.
+
+        Returns:
+            pd.DataFrame: DataFrame containing the historical data with technical indicators.
+        """
+        window = WINDOW
+        df = df.copy()
+        df = self.calculate_waddah_attar_explosion(
+            df=df, n_fast=20, n_slow=40, channel_period=20, mul=2.0, sensitivity=150
+        )
+
+        rsi = RSIIndicator(close=df["close"], window=14, fillna=True).rsi()
+        bb = BollingerBands(close=df["close"], window=20, window_dev=2, fillna=True)
+        sma = SMAIndicator(close=df["close"], window=40, fillna=True)
+        df[f"rsi{window}"] = rsi.round(2)
+        df[f"bbhi{window}"] = bb.bollinger_hband_indicator().astype(int)
+        df[f"bblo{window}"] = bb.bollinger_lband_indicator().astype(int)
+        df[f"sma{window}"] = sma.sma_indicator().round(2)
+
+        df = df.drop(
+            columns={"open", "high", "low", "volume", "close", "symbol", "date"}
+        )
+
+        return df
+
+    ###############################################################
+    # Get Technicals DataFrame
+    ###############################################################
     def get_technicals_df(self, symbol: str, history: pd.DataFrame) -> bool:
         """
         Retrieves technical indicators for a given stock symbol based on historical data.
@@ -73,6 +146,9 @@ class StockTechnicals(StockBase):
 
         return self.filter_criteria(df_tech)
 
+    ###############################################################
+    # Filter Criteria
+    ###############################################################
     def filter_criteria(self, df: pd.DataFrame) -> bool:
         """
         Filter the DataFrame based on technical indicators.
@@ -93,3 +169,63 @@ class StockTechnicals(StockBase):
             | df[SMA_COLUMNS].gt(df["close"]).any(axis=1)
         )
         return False if criteria.iloc[0] else True
+
+    def calculate_waddah_attar_explosion(
+        self,
+        df: pd.DataFrame,
+        n_fast: int = 20,
+        n_slow: int = 40,
+        channel_period: int = 20,
+        mul: float = 2.0,
+        sensitivity: int = 150,
+    ) -> pd.DataFrame:
+        """
+        Calculate Waddah Attar Explosion indicator.
+        Args:
+            df (pd.DataFrame): DataFrame containing historical data with columns 'close', 'high', 'low'.
+            n_fast (int): Period for the fast EMA.
+            n_slow (int): Period for the slow EMA.
+            channel_period (int): Period for calculating the Bollinger Bands.
+            mul (float): Multiplier for the Bollinger Bands.
+            sensitivity (int): Sensitivity factor for explosion value.
+        Returns:
+            pd.DataFrame: DataFrame containing the Waddah Attar Explosion values.
+        """
+
+        # Calculate the MACD
+        def calc_macd(close: pd.Series, n_fast: int, n_slow: int) -> pd.Series:
+            fast_ma = EMAIndicator(close=close, window=n_fast).ema_indicator()
+            slow_ma = EMAIndicator(close=close, window=n_slow).ema_indicator()
+            return fast_ma - slow_ma
+
+        # Calculate the Bollinger Bands
+        def calc_bb_bands(close: pd.Series, channel_period: int, mul: float):
+            bb = BollingerBands(close=close, window=channel_period, window_dev=mul)
+            return bb.bollinger_hband(), bb.bollinger_lband()
+
+        df = df.copy()
+        macd_diff = calc_macd(df["close"], n_fast, n_slow) - calc_macd(
+            df["close"], n_fast, n_slow
+        ).shift(1)
+        explosion = macd_diff * sensitivity
+
+        bb_upper, bb_lower = calc_bb_bands(df["close"], channel_period, mul)
+        explosion_band = bb_upper - bb_lower
+
+        df["wae_value"] = explosion
+        df["wae_explosion"] = explosion_band
+
+        # Fill NaNs and round the values
+        df["wae_value"] = df["wae_value"].fillna(df["wae_value"].mean()).round(2)
+        df["wae_explosion"] = (
+            df["wae_explosion"].fillna(df["wae_explosion"].mean()).round(2)
+        )
+
+        # Calculate the uptrend
+        df["wae_uptrend"] = (
+            (df["wae_value"] > df["wae_value"].shift(1))
+            & (df["wae_value"] > 0)
+            & (df["wae_value"] > df["wae_explosion"])
+        ).astype(int)
+
+        return df

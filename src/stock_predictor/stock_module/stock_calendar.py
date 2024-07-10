@@ -51,19 +51,26 @@ class StockCalendar:
         calendar = self.trading_client.get_calendar(
             GetCalendarRequest(start=start_date, end=end_date)
         )
+
         return [x.date for x in calendar]
 
     def _get_last_trade_date(
         self, start_date: dt.date, end_date: dt.date
     ) -> Optional[str]:
         """Get the last trading date within the specified range."""
+
+        if pendulum.now().day_of_week == 0:
+            end_date = end_date - dt.timedelta(days=2)
         trade_dates = self._get_trade_dates(start_date, end_date)
-        return trade_dates[-1].strftime("%Y-%m-%d") if trade_dates else None
+        return trade_dates[-2].strftime("%Y-%m-%d") if trade_dates else None
 
     def _get_future_trade_dates(
         self, start_date: str, end_date: dt.date, num_days: int
     ) -> FutureDates:
         """Get future trading dates from the last trading date within the specified range."""
+        if pendulum.now().day_of_week == 0:
+            start_date = pendulum.parse(start_date) + dt.timedelta(days=2)
+
         trade_dates = self._get_trade_dates(start_date, end_date)
         future_dates_dict = {
             f"next_day{i+1}": trade_dates[i].strftime("%Y-%m-%d")
@@ -84,21 +91,33 @@ class StockCalendar:
     def calendar(self) -> Dates:
         """Retrieve the trading calendar including today's date, last, and future trading dates."""
         today = pendulum.now(tz="America/New_York")
-        today_date = self._get_date(today)
+        # today_date = self._get_date(today)
 
-        last_trade_date_str = self._get_last_trade_date(
-            today_date - dt.timedelta(days=7), today_date
-        )
-        future_dates = self._get_future_trade_dates(
-            last_trade_date_str, today_date + dt.timedelta(days=6), 4
-        )
-        past_trade_date_str = self._get_past_trade_date(
-            today_date - dt.timedelta(days=5 * 365), last_trade_date_str
-        )
+        # last_trade_date_str = self._get_last_trade_date(
+        #     today_date - dt.timedelta(days=1), today_date
+        # )
+        # future_dates = self._get_future_trade_dates(
+        #     last_trade_date_str, today_date + dt.timedelta(days=6), 4
+        # )
+        # past_trade_date_str = self._get_past_trade_date(
+        #     today_date - dt.timedelta(days=5 * 365), last_trade_date_str
+        # )
+
+        if today.day_of_week == 0:
+            print(today.subtract(days=3).strftime("%Y-%m-%d"))
+
+        last_trade_date_str = today.subtract(days=1).strftime("%Y-%m-%d")
+        future_dates = {
+            "next_day1": today.add(days=1).strftime("%Y-%m-%d"),
+            "next_day2": today.add(days=2).strftime("%Y-%m-%d"),
+            "next_day3": today.add(days=3).strftime("%Y-%m-%d"),
+            "next_day4": today.add(days=4).strftime("%Y-%m-%d"),
+        }
+        past_trade_date_str = today.subtract(days=5 * 365).strftime("%Y-%m-%d")
 
         return Dates(
-            todays_date=today_date.strftime("%Y-%m-%d"),
+            todays_date=today.strftime("%Y-%m-%d"),
             past_trade_date=past_trade_date_str,
             last_trade_date=last_trade_date_str,
-            future_dates=future_dates,
+            future_dates=FutureDates(**future_dates),
         )

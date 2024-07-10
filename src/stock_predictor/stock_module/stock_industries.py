@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-REDUCE_BY_PERCENTAGE = float(os.getenv("DEFAULT_AVG_REDUCTION", 0.2))
+REDUCE_BY_PERCENTAGE = float(os.getenv("DEFAULT_AVG_REDUCTION", 0.50))
 
 
 class StockIndustries(StockBase):

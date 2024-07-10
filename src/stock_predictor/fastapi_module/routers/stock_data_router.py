@@ -100,7 +100,7 @@ async def get_stock_data_by_symbol(
         .limit(limit)
         .all()
     )
-    if stock_data is None:
+    if len(stock_data) == 0:
         logger.warning(f"Stock data with symbol {stock_symbol} not found.")
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Stock data not found"

@@ -87,7 +87,19 @@ class StockTickers(StockBase):
 
         return filtered_tickers["symbol"].tolist()
 
+    ##############################
+    # Add tickers to database
+    ##############################
     def new_add_tickers_to_db(self):
+        """
+        Adds tickers to the database.
+
+        This method retrieves a list of tickers, chunks them into smaller groups, and adds them to the database.
+        It also performs various checks and updates on the tickers before adding them to the database.
+
+        Returns:
+            chunked_tickers (list): A list of tickers chunked into smaller groups.
+        """
         stored_tickers, stored_tickers_list = self._get_stored_tickers()
         tickers = self.get_tradeable_tickers()
         chunked_tickers = chunk_list(tickers, 20)
@@ -127,48 +139,6 @@ class StockTickers(StockBase):
                         )
 
         return chunked_tickers
-
-    # ##############################
-    # # Add tickers to database
-    # ##############################
-    # def add_tickers_to_db(self) -> bool:
-    #     """
-    #     Adds tradeable tickers to the database.
-
-    #     Returns:
-    #         bool: True if the operation was successful, False otherwise.
-    #     """
-    #     try:
-    #         tickers = self.get_tradeable_tickers()
-    #         stored_tickers, stored_tickers_list = self._get_stored_tickers()
-
-    #         with Progress() as progress:
-    #             for ticker in progress.track(
-    #                 tickers, description="[cyan]Processing tickers..."
-    #             ):
-    #                 ticker_df = self.stock_financials.get_financials(symbol=ticker)
-    #                 if ticker_df.empty:
-    #                     continue
-
-    #                 if self._update_ticker(
-    #                     symbol=ticker,
-    #                     ticker_df=ticker_df,
-    #                     stored_tickers=stored_tickers,
-    #                     stored_tickers_list=stored_tickers_list,
-    #                 ):
-    #                     continue
-
-    #                 if self._tradeable_criteria(ticker_df=ticker_df):
-    #                     self._add_ticker_to_db(ticker_df)
-    #                 elif ticker in stored_tickers_list:
-    #                     self._delete_ticker(
-    #                         symbol=ticker, stored_tickers=stored_tickers
-    #                     )
-
-    #         return True
-    #     except Exception as e:
-    #         self.logger.error(f"Failed to add tickers to database: {e}")
-    #         return False
 
     ##############################
     # Get stored tickers DataFrame

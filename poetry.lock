@@ -1516,6 +1516,21 @@ numpy = {version = ">=1.26.0", markers = "python_version >= \"3.12\""}
 dev = ["absl-py", "pyink", "pylint (>=2.6.0)", "pytest", "pytest-xdist"]
 
 [[package]]
+name = "mplfinance"
+version = "0.12.10b0"
+description = "Utilities for the visualization, and visual analysis, of financial data"
+optional = false
+python-versions = "*"
+files = [
+    {file = "mplfinance-0.12.10b0-py3-none-any.whl", hash = "sha256:76d3b095f05ff35de730751649de063bea4064d0c49b21b6182c82997a7f52bb"},
+    {file = "mplfinance-0.12.10b0.tar.gz", hash = "sha256:7da150b5851aa5119ad6e06b55e48338b619bb6773f1b85df5de67a5ffd917bf"},
+]
+
+[package.dependencies]
+matplotlib = "*"
+pandas = "*"
+
+[[package]]
 name = "msgpack"
 version = "1.0.8"
 description = "MessagePack serializer"
@@ -3735,4 +3750,4 @@ repair = ["scipy (>=1.6.3)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.12"
-content-hash = "b37f836bc09a9a1e5967f4a60d4cb3826bb90cef8d09a33023175122f65d177f"
+content-hash = "c97f231b01242104ce1e642e11930bf22edaf421f65681fe6f1250aa22bbfb4c"

@@ -29,6 +29,12 @@ logging.basicConfig(level=logging.INFO if PRODUCTION == "False" else logging.WAR
 logger = logging.getLogger(__name__)
 
 
+FILTER_TECHNICALS = "Filtering {start_count} stocks for technicals..."
+FILTER_RECOMMENDATIONS = "Filtering {start_count} stocks for recommendations..."
+FILTER_PREDICTIONS = "Filtering {start_count} stocks for predictions..."
+FILTER_NEWS = "Filtering {start_count} stocks for news..."
+
+
 def chunk_list(seq: list, size: int) -> list[list]:
     """
     Splits a list into chunks of specified size.
