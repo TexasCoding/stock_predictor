@@ -1,3 +1,5 @@
+# src/stock_predictor/stock_module/stock_predictor.py
+# Description: Class to predict stock prices using LSTM neural network.
 from stock_predictor.global_settings import VERBOSE, logger
 
 import os
@@ -14,9 +16,6 @@ from collections import deque
 from keras.api.models import Sequential
 from keras.api.layers import Dense, LSTM, Dropout, Input
 from stock_predictor.stock_module.stock_base import StockBase
-
-# Graphics library
-import matplotlib.pyplot as plt
 
 # Window size or the sequence length, 7 (1 week)
 N_STEPS = 7
@@ -37,14 +36,33 @@ class StockPredictor(StockBase):
     def __init__(self, symbol: str, data_df: pd.DataFrame):
         super().__init__()
         self.symbol = symbol
-        self.data_df = data_df[["vwap", "date", "close"]].copy()
+        self.data_df = data_df[
+            ["symbol", "vwap", "date", "close", "open", "low", "high", "volume"]
+        ].copy()
 
         self.scaler = MinMaxScaler()
         self.data_df["scaled_vwap"] = self.scaler.fit_transform(
             np.expand_dims(self.data_df["vwap"].values, axis=1)
         )
 
-    def PrepareData(self, days):
+    ###############################################################
+    # Prepare the data
+    ###############################################################
+    def prepare_data(self, days):
+        """
+        Prepare the data for training the stock predictor model.
+
+        Args:
+            days (int): The number of days to look ahead for prediction.
+
+        Returns:
+            tuple: A tuple containing the following elements:
+                - df (pandas.DataFrame): The modified data DataFrame.
+                - last_sequence (numpy.ndarray): The last sequence of data.
+                - X (numpy.ndarray): The input data for training.
+                - Y (numpy.ndarray): The target data for training.
+        """
+
         df = self.data_df.copy()
         df["future"] = df["scaled_vwap"].shift(-days)
         last_sequence = np.array(df[["scaled_vwap"]].tail(days))
@@ -76,8 +94,21 @@ class StockPredictor(StockBase):
 
         return df, last_sequence, X, Y
 
+    ###############################################################
+    # Get the trained model
+    ###############################################################
     @staticmethod
-    def GetTrainedModel(x_train, y_train):
+    def get_trained_model(x_train, y_train):
+        """
+        Trains and returns a stock prediction model.
+
+        Args:
+            x_train (numpy.ndarray): The input training data.
+            y_train (numpy.ndarray): The target training data.
+
+        Returns:
+            keras.models.Sequential: The trained stock prediction model.
+        """
         BATCH_SIZE = 8
         EPOCHS = 80
 
@@ -104,15 +135,26 @@ class StockPredictor(StockBase):
 
         return model
 
-    def GetPredictions(self) -> Sequential:
-        # GET PREDICTIONS
+    ###############################################################
+    # Get the predictions
+    ###############################################################
+    def get_predictions(self) -> Sequential:
+        """
+        Get predictions for the upcoming 3 days.
+
+        Returns:
+            - model: The trained model used for predictions.
+            - predictions: A list of predicted prices for the upcoming 3 days.
+            - x_train: The input data used for training the model.
+            - y_train: The target data used for training the model.
+        """
         predictions = []
 
         for step in LOOKUP_STEPS:
-            df, last_sequence, x_train, y_train = self.PrepareData(step)
+            df, last_sequence, x_train, y_train = self.prepare_data(step)
             x_train = x_train[:, :, : len(["scaled_vwap"])].astype(np.float32)
 
-            model: Sequential = self.GetTrainedModel(x_train, y_train)
+            model: Sequential = self.get_trained_model(x_train, y_train)
 
             last_sequence = last_sequence[-N_STEPS:]
             last_sequence = np.expand_dims(last_sequence, axis=0)
@@ -134,8 +176,17 @@ class StockPredictor(StockBase):
 
         return None
 
-    def ExecuteModel(self):
-        model, predictions, x_train, y_train = self.GetPredictions()
+    ###############################################################
+    # Execute the model
+    ###############################################################
+    def execute_model(self):
+        """
+        Executes the stock predictor model and returns a copy of the data frame with predicted values.
+
+        Returns:
+            pandas.DataFrame: A copy of the data frame with predicted values.
+        """
+        model, predictions, x_train, y_train = self.get_predictions()
         copy_df = self.data_df.copy()
         y_predicted = model.predict(x_train, verbose=VERBOSE)
         y_predicted_transformed = np.squeeze(self.scaler.inverse_transform(y_predicted))
@@ -143,58 +194,49 @@ class StockPredictor(StockBase):
         last_seq = self.scaler.inverse_transform(np.expand_dims(y_train[-3:], axis=1))
         y_predicted_transformed = np.append(first_seq, y_predicted_transformed)
         y_predicted_transformed = np.append(y_predicted_transformed, last_seq)
-        copy_df["predicted_close"] = y_predicted_transformed
+        copy_df["predicted_vwap"] = y_predicted_transformed
 
-        date_now = self.calendar.future_dates.next_day2
-        date_tomorrow = self.calendar.future_dates.next_day3
-        date_after_tomorrow = self.calendar.future_dates.next_day4
+        date_now = self.calendar.future_dates.next_day1
+        date_tomorrow = self.calendar.future_dates.next_day2
+        date_after_tomorrow = self.calendar.future_dates.next_day3
 
-        copy_df.loc[date_now] = [predictions[0], f"{date_now}", 0, 0]
-        copy_df.loc[date_tomorrow] = [predictions[1], f"{date_tomorrow}", 0, 0]
-        copy_df.loc[date_after_tomorrow] = [
-            predictions[2],
-            f"{date_after_tomorrow}",
+        copy_df.loc[date_now] = [
+            copy_df["symbol"].iloc[-1],
+            copy_df["vwap"].iloc[-1],
+            f"{date_now}",
+            copy_df["close"].iloc[-1],
+            copy_df["close"].iloc[-1],
+            copy_df["close"].iloc[-1],
+            copy_df["close"].iloc[-1],
             0,
             0,
+            predictions[0],
         ]
+        copy_df.loc[date_tomorrow] = [
+            copy_df["symbol"].iloc[-1],
+            copy_df["vwap"].iloc[-1],
+            f"{date_tomorrow}",
+            copy_df["close"].iloc[-1],
+            copy_df["close"].iloc[-1],
+            copy_df["close"].iloc[-1],
+            copy_df["close"].iloc[-1],
+            0,
+            0,
+            predictions[1],
+        ]
+        copy_df.loc[date_after_tomorrow] = [
+            copy_df["symbol"].iloc[-1],
+            copy_df["vwap"].iloc[-1],
+            f"{date_after_tomorrow}",
+            copy_df["close"].iloc[-1],
+            copy_df["close"].iloc[-1],
+            copy_df["close"].iloc[-1],
+            copy_df["close"].iloc[-1],
+            0,
+            0,
+            predictions[2],
+        ]
+        copy_df["date"] = pd.to_datetime(copy_df["date"])
+        copy_df.index = pd.to_datetime(copy_df["date"])
 
         return copy_df
-
-    def plot_chart(self, data_df: pd.DataFrame) -> None:
-        # Result chart
-        plt.style.use(style="ggplot")
-        plt.figure(figsize=(16, 10))
-        plt.plot(data_df["close"][-150:].head(147))
-        plt.plot(
-            data_df["vwap"][-150:].head(147),
-            linewidth=1,
-            linestyle="dashed",
-            color="red",
-        )
-        plt.plot(
-            data_df["predicted_close"][-150:].head(147), linewidth=1, linestyle="dashed"
-        )
-        plt.plot(data_df["vwap"][-150:].tail(4))
-        plt.xlabel("days")
-        plt.ylabel("price")
-        plt.legend(
-            [
-                f"Actual price for {self.symbol}",
-                f"VWAP price for {self.symbol}",
-                f"Predicted price for {self.symbol}",
-                "Predicted price for future 3 days",
-            ]
-        )
-        plt.show()
-
-    def plot_clean_chart(self, symbol: str) -> None:
-        data_df = self.data_df.copy()
-        print(data_df)
-        # Let's preliminary see our data on the graphic
-        plt.style.use(style="ggplot")
-        plt.figure(figsize=(16, 10))
-        plt.plot(data_df["close"][-200:])
-        plt.xlabel("days")
-        plt.ylabel("price")
-        plt.legend([f"Actual price for {symbol}"])
-        plt.show()

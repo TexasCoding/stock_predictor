@@ -1,3 +1,5 @@
+# src/stock_predictor/stock_module/stock_recommendations.py
+# Description: Class to retrieve stock recommendations and calculate sentiment.
 from typing import Union
 import pandas as pd
 from stock_predictor.stock_module.stock_base import StockBase

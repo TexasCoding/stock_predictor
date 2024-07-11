@@ -1,9 +1,34 @@
-# from stock_predictor.stock_module.stock_screener import StockScreener
+from stock_predictor.stock_module.stock_screener import StockScreener
+from stock_predictor.stock_module.stock_data import StockData
+from stock_predictor.stock_module.stock_charts import StockCharts
+
+# StockData().add_stored_tickers_to_db()
 
 # stock_screener = StockScreener()
-# filtered_tickers = stock_screener.filter_tickers()
+# filtered_tickers, filtered_tickers_df = stock_screener.filter_tickers()
 
-# print(filtered_tickers)
+if __name__ == "__main__":
+    StockData().add_stored_tickers_to_db()
+    stock_screener = StockScreener()
+    chart = StockCharts()
+    filtered_tickers, filtered_tickers_df = stock_screener.filter_tickers()
+
+    for ticker in filtered_tickers:
+        df = filtered_tickers_df[filtered_tickers_df["symbol"] == ticker]
+        print(df)
+
+    print(filtered_tickers)
+    print(filtered_tickers_df)
+
+
+# from stock_predictor.stock_module.stock_calendar import StockCalendar
+
+# stock_calendar = StockCalendar()
+
+# calendar = stock_calendar.calendar()
+
+
+# print(calendar)
 
 ################################################################
 
@@ -46,19 +71,19 @@
 # print(len(tickers))
 
 ###############################################################
-from stock_predictor.stock_module.stock_tickers import StockTickers
+# from stock_predictor.stock_module.stock_tickers import StockTickers
 
-stock_tickers = StockTickers()
+# stock_tickers = StockTickers()
 
-stock_tickers.new_add_tickers_to_db()
+# stock_tickers.new_add_tickers_to_db()
 
 ###############################################################
 # from stock_predictor.stock_module.stock_history import StockHistory
 # from stock_predictor.stock_module.stock_predictor import StockPredictor
 
-# symbol = "AAPL"
+# symbol = "AGI"
 # stock_history = StockHistory()
-# stock_data = stock_history.daily_history(symbol)
+# stock_data = stock_history.local_daily_history(symbol)
 
 # stock_predictor = StockPredictor(symbol, stock_data)
 # predictions = stock_predictor.ExecuteModel()

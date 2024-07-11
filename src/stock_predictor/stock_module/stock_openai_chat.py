@@ -1,3 +1,5 @@
+# src/stock_predictor/stock_module/stock_openai_chat.py
+# Description: Class to interact with the OpenAI API for sentiment analysis.
 import os
 import re
 from typing import Any, Dict, List
@@ -13,6 +15,9 @@ class StockOpenaiChat:
         self.api_key = os.getenv("OPENAI_API_KEY")
         self.model = "gpt-4o"
 
+    ###############################################################
+    # Completion with Exponential Backoff
+    ###############################################################
     @retry(wait=wait_random_exponential(min=1, max=60), stop=stop_after_attempt(6))
     def completion_with_backoff(self, **kwargs: Dict[str, Any]) -> Any:
         """
@@ -34,6 +39,9 @@ class StockOpenaiChat:
             print(f"OpenAI API error: {e}")
             raise
 
+    ###############################################################
+    # Chat with OpenAI API
+    ###############################################################
     def chat(self, msgs: List[Dict[str, str]]) -> Any:
         """
         Chat with the OpenAI API.
@@ -46,6 +54,9 @@ class StockOpenaiChat:
         """
         return self.completion_with_backoff(model=self.model, messages=msgs)
 
+    ###############################################################
+    # Get Sentiment Analysis
+    ###############################################################
     def get_sentiment_analysis(self, title: str, symbol: str, article: str) -> str:
         """
         Get the sentiment analysis for financial news.

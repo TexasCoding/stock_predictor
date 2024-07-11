@@ -1,3 +1,5 @@
+# src/stock_predictor/stock_module/stock_history.py
+# Description: Class to retrieve stock history data from yfinance and local database.
 import pandas as pd
 import requests
 
@@ -9,8 +11,25 @@ class StockHistory(StockBase):
     def __init__(self):
         super().__init__()
 
-    def local_daily_history(self, symbol: str) -> pd.DataFrame:
-        response = requests.get(f"{BASE_URL}/stock_data/{symbol}")
+    ###############################################################
+    # Local Daily History
+    ###############################################################
+    def local_daily_history(self, symbol: str, limit: int = 1095) -> pd.DataFrame:
+        """
+        Retrieves the local daily history of a stock symbol from a specified base URL.
+
+        Parameters:
+        - symbol (str): The stock symbol to retrieve the history for.
+        - limit (int): The maximum number of records to retrieve. Default is 1095.
+
+        Returns:
+        - pd.DataFrame: A DataFrame containing the daily history of the stock symbol.
+        """
+
+        response = requests.get(f"{BASE_URL}/stock_data/{symbol}?limit={limit}")
+
+        if response.status_code != 200:
+            return pd.DataFrame()
 
         data_df = (
             pd.DataFrame(response.json())
@@ -20,15 +39,31 @@ class StockHistory(StockBase):
         )
 
         data_df["date"] = pd.to_datetime(data_df["date"])
-        data_df.index = data_df["date"]
-
+        data_df.index = pd.to_datetime(data_df["date"])
         return data_df
 
-    def daily_history(self, symbol: str) -> pd.DataFrame:
+    ###############################################################
+    # Daily History
+    ###############################################################
+    def daily_history(
+        self, symbol: str, start: str = None, end: str = None
+    ) -> pd.DataFrame:
+        """
+        Retrieves the daily historical stock data for a given symbol within a specified date range.
+
+        Args:
+            symbol (str): The stock symbol to retrieve the data for.
+            start (str, optional): The start date of the historical data. Defaults to None.
+            end (str, optional): The end date of the historical data. Defaults to None.
+
+        Returns:
+            pd.DataFrame: A DataFrame containing the daily historical stock data.
+
+        """
         ticker = self.get_ticker(symbol)
         stock_data = ticker.history(
-            start=self.calendar.past_trade_date,
-            end=self.calendar.todays_date,
+            start=start if start else self.calendar.past_trade_date,
+            end=end if end else self.calendar.todays_date,
             interval="1d",
         )
 

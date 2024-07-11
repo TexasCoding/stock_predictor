@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "stock-predictor"
-version = "0.1.0"
+version = "0.0.1"
 description = ""
 authors = ["TexasCoding <jeff10278@me.com>"]
 readme = "README.md"
@@ -24,6 +24,8 @@ ta = "^0.11.0"
 openai = "^1.35.10"
 tenacity = "^8.5.0"
 alembic = "^1.13.2"
+mplfinance = "^0.12.10b0"
+streamlit = "^1.36.0"
 
 
 [tool.poetry.group.dev.dependencies]

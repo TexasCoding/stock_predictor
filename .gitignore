@@ -317,6 +317,8 @@ poetry.toml
 
 src/data/*.db
 yfinance.cache
+yfinance.cache-journal
+sandbox.py
 
 # LSP config files
 pyrightconfig.json
