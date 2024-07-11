@@ -37,7 +37,7 @@ class StockPredictor(StockBase):
         super().__init__()
         self.symbol = symbol
         self.data_df = data_df[
-            ["vwap", "date", "close", "open", "low", "high", "volume"]
+            ["symbol", "vwap", "date", "close", "open", "low", "high", "volume"]
         ].copy()
 
         self.scaler = MinMaxScaler()
@@ -196,11 +196,12 @@ class StockPredictor(StockBase):
         y_predicted_transformed = np.append(y_predicted_transformed, last_seq)
         copy_df["predicted_vwap"] = y_predicted_transformed
 
-        date_now = self.calendar.todays_date
-        date_tomorrow = self.calendar.future_dates.next_day1
-        date_after_tomorrow = self.calendar.future_dates.next_day2
+        date_now = self.calendar.future_dates.next_day1
+        date_tomorrow = self.calendar.future_dates.next_day2
+        date_after_tomorrow = self.calendar.future_dates.next_day3
 
         copy_df.loc[date_now] = [
+            copy_df["symbol"].iloc[-1],
             copy_df["vwap"].iloc[-1],
             f"{date_now}",
             copy_df["close"].iloc[-1],
@@ -212,6 +213,7 @@ class StockPredictor(StockBase):
             predictions[0],
         ]
         copy_df.loc[date_tomorrow] = [
+            copy_df["symbol"].iloc[-1],
             copy_df["vwap"].iloc[-1],
             f"{date_tomorrow}",
             copy_df["close"].iloc[-1],
@@ -223,6 +225,7 @@ class StockPredictor(StockBase):
             predictions[1],
         ]
         copy_df.loc[date_after_tomorrow] = [
+            copy_df["symbol"].iloc[-1],
             copy_df["vwap"].iloc[-1],
             f"{date_after_tomorrow}",
             copy_df["close"].iloc[-1],

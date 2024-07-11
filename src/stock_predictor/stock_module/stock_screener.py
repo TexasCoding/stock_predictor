@@ -13,7 +13,8 @@ from stock_predictor.global_settings import (
     FILTER_PREDICTIONS,
     FILTER_NEWS,
 )
-from stock_predictor.stock_module.stock_charts import StockCharts
+
+# from stock_predictor.stock_module.stock_charts import StockCharts
 from stock_predictor.stock_module.stock_history import StockHistory
 from stock_predictor.stock_module.stock_industries import StockIndustries
 from stock_predictor.stock_module.stock_news import StockNews
@@ -56,6 +57,7 @@ class StockScreener:
         Returns:
             A list of dictionaries representing the filtered tickers.
         """
+        all_predictions_df = pd.DataFrame()
         start_count = len(self.tickers)
         with console.status(FILTER_TECHNICALS) as status:
             # Filter tickers based on technical indicators.
@@ -87,12 +89,15 @@ class StockScreener:
                     )
                     # Filter tickers based on news sentiment analysis using Openai.
                     if self._filter_news(symbol=ticker):
+                        all_predictions_df = pd.concat(
+                            [all_predictions_df, prediction_df]
+                        )
                         # Add predicted ticker to database.
                         self._add_predicted_to_db(prediction)
                         # Append predicted ticker to list.
                         self.filtered_predicted_tickers.append(prediction)
 
-        return self.filtered_predicted_tickers, prediction_df
+        return self.filtered_predicted_tickers, all_predictions_df
 
     ########################################################
     # This method is used to update the status message.
@@ -254,13 +259,15 @@ class StockScreener:
         current_vwap = round(pred_df["vwap"].iloc[0], 2)
         future_goal = round(current_vwap * 1.03, 2)
 
+        # print(f"Prediction Max: {prediction_max - current_vwap}")
+
         if prediction_max >= future_goal:
-            StockCharts().plot_prediction_chart(prediction_df.tail(100))
+            # StockCharts().plot_prediction_chart(prediction_df.tail(100))
             # stock_predictor.plot_chart(prediction_df)
             return {
                 "symbol": ticker,
                 "open_price": current_close,
-                "take_price": round(current_close * 1.03, 2),
+                "take_price": round(current_close + (prediction_max - current_vwap), 2),
             }, prediction_df
         return None, pd.DataFrame()
 

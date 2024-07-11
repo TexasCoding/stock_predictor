@@ -58,7 +58,7 @@ class StockData:
 
         # print(pendulum.parse(history["date"].iloc[-1].strftime('%Y-%m-%d')).add(days=1).strftime('%Y-%m-%d'))
 
-        return history["date"].iloc[-1]
+        return history["date"].iloc[-1].strftime("%Y-%m-%d")
 
     def _add_tickers_to_db(self, tickers: List[str]) -> None:
         """Helper function to add tickers to the database.
@@ -86,11 +86,9 @@ class StockData:
         update_ticker = self.check_ticker_in_db(symbol)
 
         if update_ticker is not False:
-            # print(f"LATEST DATE: {update_ticker}")
-            # print(f"LAST TRADE DATE: {self.stock_history.calendar.last_trade_date}")
             if str(update_ticker) == str(self.stock_history.calendar.last_trade_date):
                 logger.info(f"Stock data for {symbol} is up to date.")
-                update_ticker = self.stock_history.calendar.last_trade_date
+                return
             # print(f"LATEST DATE: {self.stock_history.calendar.last_trade_date}")
             stock_data = self.get_stock_data(
                 symbol, start=self.stock_history.calendar.last_trade_date
@@ -137,7 +135,7 @@ class StockData:
                     "vwap": row.get("vwap", None),  # Use `get` to handle missing vwap
                 }
             )
-            print(post_list)
+            # print(post_list)
         return post_list
 
 
