@@ -23,13 +23,13 @@ N_STEPS = 7
 LOOKUP_STEPS = [1, 2, 3]
 
 if VERBOSE > 0:
-    tf.get_logger().setLevel("WARNING")
-    logger.setLevel("WARNING")
+    tf.get_logger().setLevel("ERROR")
+    logger.setLevel("ERROR")
     os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 else:
     tf.get_logger().setLevel("ERROR")
     logger.setLevel("ERROR")
-    os.environ["TF_CPP_MIN_LOG_LEVEL"] = "1"
+    os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 
 
 class StockPredictor(StockBase):

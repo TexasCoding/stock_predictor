@@ -89,6 +89,12 @@ class StockOpenaiChat:
             sentiment = re.sub(
                 "[^a-zA-Z]", "", response.choices[0].message.content.strip().upper()
             )
+            if "BEARISH" in sentiment:
+                sentiment = "BEARISH"
+            elif "BULLISH" in sentiment:
+                sentiment = "BULLISH"
+            else:
+                sentiment = sentiment
             if sentiment not in {"BEARISH", "BULLISH", "NEUTRAL"}:
                 raise ValueError(f"Unexpected sentiment response: {sentiment}")
             return sentiment

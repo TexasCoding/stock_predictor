@@ -5,6 +5,7 @@ import os
 from typing import Dict, List, Optional, Tuple
 
 import pandas as pd
+import pendulum
 import requests
 from stock_predictor.global_settings import (
     BASE_URL,
@@ -14,8 +15,11 @@ from stock_predictor.global_settings import (
     FILTER_NEWS,
 )
 
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 # from stock_predictor.stock_module.stock_charts import StockCharts
-from stock_predictor.stock_module.stock_history import StockHistory
+from stock_predictor.polygon.polygon_history import PolygonHistory
+
+# from stock_predictor.stock_module.stock_history import StockHistory
 from stock_predictor.stock_module.stock_industries import StockIndustries
 from stock_predictor.stock_module.stock_news import StockNews
 from stock_predictor.stock_module.stock_openai_chat import StockOpenaiChat
@@ -184,7 +188,11 @@ class StockScreener:
             Returns:
                 bool: True if the ticker passes the technical analysis filter, False otherwise.
             """
-            history = StockHistory().local_daily_history(symbol=ticker, limit=200)
+            # history = StockHistory().local_daily_history(symbol=ticker, limit=200)
+            history = PolygonHistory().daily_history(
+                symbol=ticker,
+                from_date=pendulum.now().subtract(years=1).to_date_string(),
+            )
             if history.empty:
                 return False
 
@@ -246,7 +254,8 @@ class StockScreener:
             Optional[Dict[str, str]]: A dictionary containing the filtered ticker prediction information,
             including the symbol, open price, and take price. Returns None if the ticker prediction does not meet the criteria.
         """
-        history = StockHistory().local_daily_history(symbol=ticker)
+        # history = StockHistory().local_daily_history(symbol=ticker)
+        history = PolygonHistory().daily_history(symbol=ticker)
         if history.empty:
             return None
 
@@ -258,6 +267,12 @@ class StockScreener:
         current_close = round(pred_df["close"].iloc[0], 2)
         current_vwap = round(pred_df["vwap"].iloc[0], 2)
         future_goal = round(current_vwap * 1.03, 2)
+        try:
+            percentage_change = (
+                round((prediction_max - current_vwap) / current_vwap, 2) * 100
+            )
+        except ZeroDivisionError:
+            percentage_change = 0
 
         # print(f"Prediction Max: {prediction_max - current_vwap}")
 
@@ -268,7 +283,8 @@ class StockScreener:
                 "symbol": ticker,
                 "open_price": current_close,
                 "take_price": round(current_close + (prediction_max - current_vwap), 2),
-            }, prediction_df
+                "percentage_change": percentage_change,
+            }, prediction_df.tail(200)
         return None, pd.DataFrame()
 
     def _add_predicted_to_db(self, predicted_dict: Dict[str, str]) -> None:

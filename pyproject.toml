@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "stock-predictor"
-version = "0.0.1"
+version = "0.0.2"
 description = ""
 authors = ["TexasCoding <jeff10278@me.com>"]
 readme = "README.md"
@@ -26,6 +26,8 @@ tenacity = "^8.5.0"
 alembic = "^1.13.2"
 mplfinance = "^0.12.10b0"
 streamlit = "^1.36.0"
+notebook = "^7.2.1"
+ipywidgets = "^8.1.3"
 
 
 [tool.poetry.group.dev.dependencies]

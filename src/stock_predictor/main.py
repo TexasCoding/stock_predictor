@@ -1,24 +1,33 @@
-from stock_predictor.stock_module.stock_screener import StockScreener
-from stock_predictor.stock_module.stock_data import StockData
-from stock_predictor.stock_module.stock_charts import StockCharts
+# from pprint import pprint
+# from stock_predictor.polygon.polygon_history import PolygonHistory
 
-# StockData().add_stored_tickers_to_db()
+# polygon_history = PolygonHistory()
 
-# stock_screener = StockScreener()
-# filtered_tickers, filtered_tickers_df = stock_screener.filter_tickers()
+# history = polygon_history.daily_history("ACB")
 
-if __name__ == "__main__":
-    StockData().add_stored_tickers_to_db()
-    stock_screener = StockScreener()
-    chart = StockCharts()
-    filtered_tickers, filtered_tickers_df = stock_screener.filter_tickers()
+# pprint(history)
 
-    for ticker in filtered_tickers:
-        df = filtered_tickers_df[filtered_tickers_df["symbol"] == ticker]
-        print(df)
+# from stock_predictor.stock_module.stock_screener import StockScreener
+# from stock_predictor.stock_module.stock_data import StockData
+# from stock_predictor.stock_module.stock_charts import StockCharts
 
-    print(filtered_tickers)
-    print(filtered_tickers_df)
+# # StockData().add_stored_tickers_to_db()
+
+# # stock_screener = StockScreener()
+# # filtered_tickers, filtered_tickers_df = stock_screener.filter_tickers()
+
+# if __name__ == "__main__":
+#     StockData().add_stored_tickers_to_db()
+#     stock_screener = StockScreener()
+#     chart = StockCharts()
+#     filtered_tickers, filtered_tickers_df = stock_screener.filter_tickers()
+
+#     for ticker in filtered_tickers:
+#         df = filtered_tickers_df[filtered_tickers_df["symbol"] == ticker]
+#         print(df)
+
+#     print(filtered_tickers)
+#     print(filtered_tickers_df)
 
 
 # from stock_predictor.stock_module.stock_calendar import StockCalendar

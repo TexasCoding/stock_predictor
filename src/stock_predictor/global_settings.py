@@ -23,18 +23,22 @@ PRODUCTION = os.getenv("PRODUCTION")
 DATABASE_FILE = os.getenv("DATABASE_FILE")
 VERBOSE = int(os.getenv("VERBOSE"))
 
+POLYGON_API_KEY = os.getenv("POLYGON_API_KEY")
+
 DEFAULT_AVG_REDUCTION = 0.2
 # Configure basic logging
 logging.basicConfig(level=logging.INFO if PRODUCTION == "False" else logging.WARNING)
 logger = logging.getLogger(__name__)
 
 
-FILTER_TECHNICALS = "Filtering {start_count} stocks for technicals..."
-FILTER_RECOMMENDATIONS = "Filtering {start_count} stocks for recommendations..."
-FILTER_PREDICTIONS = (
-    "Predicting {symbol} for future gains, {start_count} stocks left to scan..."
+FILTER_TECHNICALS = (
+    "[blue]Filtering [bold]{start_count}[/bold] stocks for technicals..."
 )
-FILTER_NEWS = "Filtering news for {symbol} with Openai..."
+FILTER_RECOMMENDATIONS = (
+    "[purple]Filtering [bold]{start_count}[/bold] stocks for recommendations..."
+)
+FILTER_PREDICTIONS = "[red]Predicting {symbol} for future gains, [bold]{start_count}[/bold] stocks left to scan..."
+FILTER_NEWS = "[yellow]Filtering news for {symbol} with Openai..."
 
 
 def chunk_list(seq: list, size: int) -> list[list]:

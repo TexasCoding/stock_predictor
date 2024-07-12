@@ -88,9 +88,9 @@ class StockTechnicals(StockBase):
             df=df, n_fast=20, n_slow=40, channel_period=20, mul=2.0, sensitivity=150
         )
 
-        rsi = RSIIndicator(close=df["close"], window=14, fillna=True).rsi()
-        bb = BollingerBands(close=df["close"], window=20, window_dev=2, fillna=True)
-        sma = SMAIndicator(close=df["close"], window=40, fillna=True)
+        rsi = RSIIndicator(close=df["vwap"], window=14, fillna=True).rsi()
+        bb = BollingerBands(close=df["vwap"], window=20, window_dev=2, fillna=True)
+        sma = SMAIndicator(close=df["vwap"], window=40, fillna=True)
         df[f"rsi{window}"] = rsi.round(2)
         df[f"bbhi{window}"] = bb.bollinger_hband_indicator().astype(int)
         df[f"bblo{window}"] = bb.bollinger_lband_indicator().astype(int)
@@ -204,12 +204,12 @@ class StockTechnicals(StockBase):
             return bb.bollinger_hband(), bb.bollinger_lband()
 
         df = df.copy()
-        macd_diff = calc_macd(df["close"], n_fast, n_slow) - calc_macd(
-            df["close"], n_fast, n_slow
+        macd_diff = calc_macd(df["vwap"], n_fast, n_slow) - calc_macd(
+            df["vwap"], n_fast, n_slow
         ).shift(1)
         explosion = macd_diff * sensitivity
 
-        bb_upper, bb_lower = calc_bb_bands(df["close"], channel_period, mul)
+        bb_upper, bb_lower = calc_bb_bands(df["vwap"], channel_period, mul)
         explosion_band = bb_upper - bb_lower
 
         df["wae_value"] = explosion
