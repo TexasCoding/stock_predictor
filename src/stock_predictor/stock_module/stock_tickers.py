@@ -35,7 +35,7 @@ class StockTickers(StockBase):
     ##############################
     def get_profitable_tickers(
         self,
-        industry_avg_df: pd.DataFrame,
+        avg_df: pd.DataFrame,
     ) -> List[str]:
         """
         Returns a list of profitable tickers based on the given industry average DataFrame.
@@ -48,13 +48,13 @@ class StockTickers(StockBase):
         """
 
         tickers_df = self.get_stored_tickers_df()
-        merged_df = pd.merge(tickers_df, industry_avg_df, on="industry")
+        merged_df = pd.merge(tickers_df, avg_df, on="sector")
 
         condition = (
             (merged_df["gross_margin_pct"] > merged_df["gross_margin_avg"])
             & (merged_df["net_margin_pct"] > merged_df["net_margin_avg"])
             & (merged_df["trailing_pe"] > merged_df["trailing_pe_avg"])
-            & (merged_df["forward_pe"] > merged_df["forward_pe_avg"])
+            & (merged_df["piotroski_score"] > merged_df["piotroski_score_avg"])
         )
 
         profitable_tickers = merged_df[condition]["symbol"].tolist()

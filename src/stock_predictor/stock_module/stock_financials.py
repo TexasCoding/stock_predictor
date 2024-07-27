@@ -29,12 +29,15 @@ class StockFinancials(StockBase):
             pd.Series: Computed margin as a Series.
         """
         pd.set_option("future.no_silent_downcasting", True)
-        if numerator in df and denominator in df:
-            margin = (df[numerator] / df[denominator] * 100).replace(
-                {float("inf"): 0.0, float("-inf"): 0.0, pd.NA: 0.0}
-            )
-            return margin
-        return pd.Series(0.0, index=df.index)
+        try:
+            if numerator in df and denominator in df:
+                margin = (df[numerator] / df[denominator] * 100).replace(
+                    {float("inf"): 0.0, float("-inf"): 0.0, pd.NA: 0.0}
+                )
+                return margin
+            return pd.Series(0.0, index=df.index)
+        except ZeroDivisionError:
+            return pd.Series(0.0, index=df.index)
 
     ###############################################################
     # Get Financials

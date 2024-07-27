@@ -35,7 +35,7 @@ from rich.status import Status
 
 load_dotenv()
 console = Console()
-DEFAULT_AVG_REDUCTION = float(os.getenv("DEFAULT_AVG_REDUCTION", 0.50))
+DEFAULT_AVG_REDUCTION = float(os.getenv("DEFAULT_AVG_REDUCTION", 0.20))
 
 
 class StockScreener:

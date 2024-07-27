@@ -39,10 +39,11 @@ class StockTechnicals(StockBase):
         # Check the conditions in a single detailed conditional statement
         is_tradeable = (
             yesterday["wae_uptrend"] == 1
-            and float(yesterday["rsi40"]) < 70.0
-            and yesterday["bbhi40"] == 0
-            and yesterday["bblo40"] == 0
-            and yesterday["sma40"] < yesterday["vwap"]
+            and float(yesterday["rsi"]) < 70.0
+            and yesterday["bbhi"] == 0
+            and yesterday["bblo"] == 0
+            and yesterday["sma"] < yesterday["vwap"]
+            and yesterday["sma"] > yesterday["sma80"]
         )
 
         return is_tradeable
@@ -82,23 +83,23 @@ class StockTechnicals(StockBase):
         Returns:
             pd.DataFrame: DataFrame containing the historical data with technical indicators.
         """
-        window = WINDOW
+        # window = WINDOW
         df = df.copy()
         df = self.calculate_waddah_attar_explosion(
             df=df, n_fast=20, n_slow=40, channel_period=20, mul=2.0, sensitivity=150
         )
 
-        rsi = RSIIndicator(close=df["vwap"], window=14, fillna=True).rsi()
-        bb = BollingerBands(close=df["vwap"], window=20, window_dev=2, fillna=True)
-        sma = SMAIndicator(close=df["vwap"], window=40, fillna=True)
-        df[f"rsi{window}"] = rsi.round(2)
-        df[f"bbhi{window}"] = bb.bollinger_hband_indicator().astype(int)
-        df[f"bblo{window}"] = bb.bollinger_lband_indicator().astype(int)
-        df[f"sma{window}"] = sma.sma_indicator().round(2)
+        rsi = RSIIndicator(close=df["close"], window=14, fillna=True).rsi()
+        bb = BollingerBands(close=df["close"], window=20, window_dev=2, fillna=True)
+        sma = SMAIndicator(close=df["close"], window=40, fillna=True)
+        sma80 = SMAIndicator(close=df["close"], window=80, fillna=True)
+        df["rsi"] = rsi.round(2)
+        df["bbhi"] = bb.bollinger_hband_indicator().astype(int)
+        df["bblo"] = bb.bollinger_lband_indicator().astype(int)
+        df["sma"] = sma.sma_indicator().round(2)
+        df["sma80"] = sma80.sma_indicator().round(2)
 
-        df = df.drop(
-            columns={"open", "high", "low", "volume", "close", "symbol", "date"}
-        )
+        df = df.drop(columns={"open", "high", "low", "volume", "close"})
 
         return df
 
@@ -204,12 +205,12 @@ class StockTechnicals(StockBase):
             return bb.bollinger_hband(), bb.bollinger_lband()
 
         df = df.copy()
-        macd_diff = calc_macd(df["vwap"], n_fast, n_slow) - calc_macd(
+        macd_diff = calc_macd(df["close"], n_fast, n_slow) - calc_macd(
             df["vwap"], n_fast, n_slow
         ).shift(1)
         explosion = macd_diff * sensitivity
 
-        bb_upper, bb_lower = calc_bb_bands(df["vwap"], channel_period, mul)
+        bb_upper, bb_lower = calc_bb_bands(df["close"], channel_period, mul)
         explosion_band = bb_upper - bb_lower
 
         df["wae_value"] = explosion

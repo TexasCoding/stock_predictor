@@ -1,5 +1,5 @@
-# src/stock_trader/stock_module/stock_industries.py
-# This module contains the Industries class, which is used to retrieve and calculate various metrics for different industries.
+# src/stock_trader/stock_module/stock_sectors.py
+# This module contains the sectors class, which is used to retrieve and calculate various metrics for different sectors.
 import os
 import pandas as pd
 from stock_predictor.stock_module.stock_base import StockBase
@@ -12,10 +12,10 @@ load_dotenv()
 REDUCE_BY_PERCENTAGE = float(os.getenv("DEFAULT_AVG_REDUCTION", 0.20))
 
 
-class StockIndustries(StockBase):
+class StockSectors(StockBase):
     def __init__(self, average_reduction: float = REDUCE_BY_PERCENTAGE):
         """
-        Initialize the StockIndustries class.
+        Initialize the Stocksectors class.
 
         Parameters:
             average_reduction (float): The average reduction value to be used. Defaults to REDUCE_BY_PERCENTAGE.
@@ -25,66 +25,66 @@ class StockIndustries(StockBase):
         self.average_reduction = average_reduction
 
     ############################
-    # Get unique industries list
+    # Get unique sectors list
     ############################
-    def get_unique_industries(self) -> list[str]:
+    def get_unique_sectors(self) -> list[str]:
         """
-        Returns a list of unique industries from the tickers DataFrame.
+        Returns a list of unique sectors from the tickers DataFrame.
 
         Returns:
-            list[str]: A list of unique industries.
+            list[str]: A list of unique sectors.
         """
-        return self.tickers["industry"].unique().tolist()
+        return self.tickers["sector"].unique().tolist()
 
     ############################
-    # Get stocks by industry
+    # Get stocks by sector
     ############################
-    def get_stocks_by_industry(
-        self, industry: str, sort_by: str = "symbol", ascending: bool = True
+    def get_stocks_by_sector(
+        self, sector: str, sort_by: str = "symbol", ascending: bool = True
     ) -> pd.DataFrame:
         """
-        Retrieves stocks by industry.
+        Retrieves stocks by sector.
 
         Args:
-            industry (str): The industry to filter stocks by.
+            sector (str): The sector to filter stocks by.
             sort_by (str, optional): The column to sort the stocks by. Defaults to "symbol".
                 * Allowed values are "symbol", "name", "gross_margin_pct", "net_margin_pct", "trailing_pe", "forward_pe".
             ascending (bool, optional): Whether to sort the stocks in ascending order. Defaults to True.
 
         Returns:
-            pd.DataFrame: A DataFrame containing the stocks filtered by industry.
+            pd.DataFrame: A DataFrame containing the stocks filtered by sector.
         """
         self.stock_sorter_check(sort_by)
-        return self.tickers[self.tickers["industry"] == industry].sort_values(
+        return self.tickers[self.tickers["sector"] == sector].sort_values(
             by=sort_by, ascending=ascending
         )
 
     ############################
-    # Industry average DataFrame
+    # sector average DataFrame
     ############################
-    def industry_avg_df(
+    def sector_avg_df(
         self, sort_by: str = "count", ascending: bool = True
     ) -> pd.DataFrame:
         """
-        Calculate the average values of various metrics for each industry and return the results as a DataFrame.
+        Calculate the average values of various metrics for each sector and return the results as a DataFrame.
 
         Args:
             sort_by (str, optional): The column to sort the DataFrame by. Defaults to "count".
-                * Allowed values are "industry", "count", "gross_margin_avg", "net_margin_avg", "trailing_pe_avg", "forward_pe_avg".
+                * Allowed values are "sector", "count", "gross_margin_avg", "net_margin_avg", "trailing_pe_avg", "forward_pe_avg".
             ascending (bool, optional): Whether to sort the DataFrame in ascending order. Defaults to True.
 
         Returns:
-            pd.DataFrame: A DataFrame containing the average values of metrics for each industry, sorted according to the specified column.
+            pd.DataFrame: A DataFrame containing the average values of metrics for each sector, sorted according to the specified column.
 
         Raises:
             ValueError: If the specified sort_by column is not valid.
         """
-        self.industry_sorter_check(sort_by)
+        self.sector_sorter_check(sort_by)
 
-        industry_metrics = (
-            self.tickers.groupby("industry")
+        sector_metrics = (
+            self.tickers.groupby("sector")
             .agg(
-                count=("industry", "size"),
+                count=("sector", "size"),
                 gross_margin_avg=(
                     "gross_margin_pct",
                     lambda x: round(x.mean() * (1 - self.average_reduction), 2),
@@ -99,47 +99,47 @@ class StockIndustries(StockBase):
                 ),
                 piotroski_score_avg=(
                     "piotroski_score",
-                    lambda x: x.mean(),
+                    lambda x: int(x.mean() * (1 - self.average_reduction)),
                 ),
             )
             .reset_index()
         )
 
-        return industry_metrics.sort_values(
-            by=sort_by, ascending=ascending
-        ).reset_index(drop=True)
+        return sector_metrics.sort_values(by=sort_by, ascending=ascending).reset_index(
+            drop=True
+        )
 
     ############################
-    # Average metric by industry
+    # Average metric by sector
     ############################
-    def _average_metric_by_industry(self, industry: str, metric: str) -> float:
+    def _average_metric_by_sector(self, sector: str, metric: str) -> float:
         """
-        Calculate the average of a given metric for a specified industry.
+        Calculate the average of a given metric for a specified sector.
 
         Args:
-            industry (str): The industry for which to calculate the metric.
+            sector (str): The sector for which to calculate the metric.
             metric (str): The metric to calculate the average for.
 
         Returns:
-            float: The average value of the specified metric for the industry.
+            float: The average value of the specified metric for the sector.
         """
         return round(
-            self.tickers[self.tickers["industry"] == industry][metric].mean()
+            self.tickers[self.tickers["sector"] == sector][metric].mean()
             * (1 - self.average_reduction),
             2,
         )
 
     ############################
-    # Count tickers per industry
+    # Count tickers per sector
     ############################
-    def count_tickers_per_industry(self, industry: str) -> int:
+    def count_tickers_per_sector(self, sector: str) -> int:
         """
-        Count the number of tickers for a given industry.
+        Count the number of tickers for a given sector.
 
         Args:
-            industry (str): The industry to count tickers for.
+            sector (str): The sector to count tickers for.
 
         Returns:
-            int: The number of tickers in the specified industry.
+            int: The number of tickers in the specified sector.
         """
-        return len(self.get_stocks_by_industry(industry))
+        return len(self.get_stocks_by_sector(sector))

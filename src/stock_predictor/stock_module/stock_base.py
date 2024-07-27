@@ -11,6 +11,7 @@ from stock_predictor.global_settings import (
     ALPACA_API_KEY,
     ALPACA_SECRET_KEY,
     ALPACA_PAPER,
+    sector_sorter_check,
     stock_sorter_check,
 )
 from stock_predictor.stock_module.stock_calendar import Dates, StockCalendar
@@ -46,6 +47,7 @@ class StockBase:
 
         self.calendar: Dates = StockCalendar().calendar()
         self.stock_sorter_check = stock_sorter_check
+        self.sector_sorter_check = sector_sorter_check
         self.industry_sorter_check = industry_sorter_check
         self.base_url = BASE_URL
 

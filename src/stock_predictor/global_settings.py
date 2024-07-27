@@ -94,7 +94,43 @@ def industry_sorter_check(sort_by: str) -> str:
         "gross_margin_avg",
         "net_margin_avg",
         "trailing_pe_avg",
-        "forward_pe_avg",
+        "cap_expend_coverage_avg",
+        "long_term_debt_cap_avg",
+        "piotroski_score_avg",
+    ]
+    if sort_by not in allowed_sort_by:
+        raise ValueError(f"sort_by must be one of {allowed_sort_by}")
+
+
+####################################################################################################
+# Add the industry_sorter function to the global_values.py file
+####################################################################################################
+def sector_sorter_check(sort_by: str) -> str:
+    """
+    Sorts the industries based on the specified criteria.
+
+    Args:
+        sort_by (str): The criteria to sort the industries by. Must be one of the following:
+            - "industry"
+            - "count"
+            - "gross_margin_avg"
+            - "net_margin_avg"
+            - "trailing_pe_avg"
+            - "forward_pe_avg"
+
+    Returns:
+        str: The sorted industries based on the specified criteria.
+
+    Raises:
+        ValueError: If the specified sort_by criteria is not one of the allowed values.
+    """
+    allowed_sort_by = [
+        "sector",
+        "count",
+        "gross_margin_avg",
+        "net_margin_avg",
+        "trailing_pe_avg",
+        "piotroski_score_avg",
     ]
     if sort_by not in allowed_sort_by:
         raise ValueError(f"sort_by must be one of {allowed_sort_by}")

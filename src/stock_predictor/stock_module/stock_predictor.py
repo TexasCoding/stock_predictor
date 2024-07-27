@@ -36,13 +36,14 @@ class StockPredictor(StockBase):
     def __init__(self, symbol: str, data_df: pd.DataFrame):
         super().__init__()
         self.symbol = symbol
-        self.data_df = data_df[
-            ["symbol", "vwap", "date", "close", "open", "low", "high", "volume"]
-        ].copy()
+        self.data_df = data_df[["close", "open", "low", "high", "volume"]].copy()
+
+        self.data_df["date"] = self.data_df.index
+        self.data_df["symbol"] = self.symbol
 
         self.scaler = MinMaxScaler()
-        self.data_df["scaled_vwap"] = self.scaler.fit_transform(
-            np.expand_dims(self.data_df["vwap"].values, axis=1)
+        self.data_df["scaled_close"] = self.scaler.fit_transform(
+            np.expand_dims(self.data_df["close"].values, axis=1)
         )
 
     ###############################################################
@@ -64,20 +65,20 @@ class StockPredictor(StockBase):
         """
 
         df = self.data_df.copy()
-        df["future"] = df["scaled_vwap"].shift(-days)
-        last_sequence = np.array(df[["scaled_vwap"]].tail(days))
+        df["future"] = df["scaled_close"].shift(-days)
+        last_sequence = np.array(df[["scaled_close"]].tail(days))
         df.dropna(inplace=True)
         sequence_data = []
         sequences = deque(maxlen=N_STEPS)
 
         for entry, target in zip(
-            df[["scaled_vwap"] + ["date"]].values, df["future"].values
+            df[["scaled_close"] + ["date"]].values, df["future"].values
         ):
             sequences.append(entry)
             if len(sequences) == N_STEPS:
                 sequence_data.append([np.array(sequences), target])
 
-        last_sequence = list([s[: len(["scaled_vwap"])] for s in sequences]) + list(
+        last_sequence = list([s[: len(["scaled_close"])] for s in sequences]) + list(
             last_sequence
         )
         last_sequence = np.array(last_sequence).astype(np.float32)
@@ -152,7 +153,7 @@ class StockPredictor(StockBase):
 
         for step in LOOKUP_STEPS:
             df, last_sequence, x_train, y_train = self.prepare_data(step)
-            x_train = x_train[:, :, : len(["scaled_vwap"])].astype(np.float32)
+            x_train = x_train[:, :, : len(["scaled_close"])].astype(np.float32)
 
             model: Sequential = self.get_trained_model(x_train, y_train)
 
@@ -194,48 +195,53 @@ class StockPredictor(StockBase):
         last_seq = self.scaler.inverse_transform(np.expand_dims(y_train[-3:], axis=1))
         y_predicted_transformed = np.append(first_seq, y_predicted_transformed)
         y_predicted_transformed = np.append(y_predicted_transformed, last_seq)
-        copy_df["predicted_vwap"] = y_predicted_transformed
+        copy_df["predicted_close"] = y_predicted_transformed
 
         date_now = self.calendar.future_dates.next_day1
         date_tomorrow = self.calendar.future_dates.next_day2
         date_after_tomorrow = self.calendar.future_dates.next_day3
 
         copy_df.loc[date_now] = [
-            copy_df["symbol"].iloc[-1],
-            copy_df["vwap"].iloc[-1],
-            f"{date_now}",
+            # copy_df["symbol"].iloc[-1],
+            # copy_df["vwap"].iloc[-1],
+            # f"{date_now}",
             copy_df["close"].iloc[-1],
             copy_df["close"].iloc[-1],
             copy_df["close"].iloc[-1],
             copy_df["close"].iloc[-1],
             0,
+            f"{date_tomorrow}",
+            copy_df["symbol"].iloc[-1],
             0,
             predictions[0],
         ]
         copy_df.loc[date_tomorrow] = [
-            copy_df["symbol"].iloc[-1],
-            copy_df["vwap"].iloc[-1],
-            f"{date_tomorrow}",
+            # copy_df["symbol"].iloc[-1],
+            # copy_df["vwap"].iloc[-1],
             copy_df["close"].iloc[-1],
             copy_df["close"].iloc[-1],
             copy_df["close"].iloc[-1],
             copy_df["close"].iloc[-1],
             0,
+            f"{date_tomorrow}",
+            copy_df["symbol"].iloc[-1],
             0,
             predictions[1],
         ]
         copy_df.loc[date_after_tomorrow] = [
-            copy_df["symbol"].iloc[-1],
-            copy_df["vwap"].iloc[-1],
-            f"{date_after_tomorrow}",
+            # copy_df["vwap"].iloc[-1],
+            # f"{date_after_tomorrow}",
             copy_df["close"].iloc[-1],
             copy_df["close"].iloc[-1],
             copy_df["close"].iloc[-1],
             copy_df["close"].iloc[-1],
             0,
+            f"{date_tomorrow}",
+            copy_df["symbol"].iloc[-1],
             0,
             predictions[2],
         ]
+
         copy_df["date"] = pd.to_datetime(copy_df["date"])
         copy_df.index = pd.to_datetime(copy_df["date"])
 

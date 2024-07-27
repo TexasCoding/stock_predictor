@@ -9,7 +9,8 @@ from stock_predictor.fastapi_module.database import Base
 from stock_predictor.fastapi_module.dependencies import metadata  # noqa: F401
 
 from stock_predictor.fastapi_module.models.predicted_trades_model import PredictedTrades  # noqa: F401
-from stock_predictor.fastapi_module.models.stock_data_model import StockData  # noqa: F401
+
+# from stock_predictor.fastapi_module.models.stock_data_model import StockData  # noqa: F401
 from stock_predictor.fastapi_module.models.tickers_model import Ticker  # noqa: F401
 
 # this is the Alembic Config object, which provides
