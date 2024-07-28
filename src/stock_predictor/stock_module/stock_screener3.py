@@ -82,7 +82,9 @@ class StockScreener3:
                 )
                 start_count -= 1
 
-                if not self._filter_technicals(ticker, chart):
+                if not self._filter_technicals(
+                    chart=chart, fast_period=20, slow_period=40
+                ):
                     continue
 
                 if not self._filter_recommendations(ticker):
@@ -266,7 +268,9 @@ class StockScreener3:
     ###############################################################
     # Filter Technicals
     ###############################################################
-    def _filter_technicals(self, ticker: str, chart: FmpChartData) -> bool:
+    def _filter_technicals(
+        self, chart: FmpChartData, fast_period: int = 20, slow_period: int = 40
+    ) -> bool:
         """
         Filters the given historical data for a specific ticker based on technical indicators.
 
@@ -283,12 +287,12 @@ class StockScreener3:
         #             to_date=yesterday,
         #         )
         history = deepcopy(chart)
-        history.vwap()
-        history.sma(40)
-        history.sma(80)
-        history.rsi(40)
-        history.bb(20, 2)
-        history.waddah_attar_explosion(20, 40, 20, 2.0, 150)
+        # history.vwap()
+        # history.sma(fast_period)
+        # history.sma(slow_period)
+        history.rsi(fast_period)
+        history.bb(fast_period, 2)
+        history.waddah_attar_explosion(fast_period, slow_period, 20, 2.0, 150)
 
         history_df = history.return_chart()
 
@@ -301,11 +305,11 @@ class StockScreener3:
         # Check the conditions in a single detailed conditional statement
         is_tradeable = (
             prev_day["wae_uptrend"] == 1
-            and float(prev_day["rsi40"]) < 70.0
-            and prev_day["bb_h20_ind"] == 0
-            and prev_day["bb_l20_ind"] == 0
-            and prev_day["sma40"] < prev_day["vwap"]
-            and prev_day["sma40"] > prev_day["sma80"]
+            and float(prev_day[f"rsi{fast_period}"]) < 70.0
+            and prev_day[f"bb_h{fast_period}_ind"] == 0
+            and prev_day[f"bb_l{fast_period}_ind"] == 0
+            # and prev_day[f"sma{fast_period}"] < prev_day["vwap"]
+            # and prev_day[f"sma{fast_period}"] > prev_day[f"sma{slow_period}"]
         )
 
         return is_tradeable

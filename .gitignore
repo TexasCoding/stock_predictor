@@ -314,7 +314,7 @@ poetry.toml
 
 # ruff
 .ruff_cache/
-
+BACKUPS/
 src/data/*.db
 src/data/*.db:*
 yfinance.cache
