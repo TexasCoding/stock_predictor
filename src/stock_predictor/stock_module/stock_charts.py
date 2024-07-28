@@ -22,14 +22,14 @@ class StockCharts:
             volume=True,
             addplot=[
                 mpf.make_addplot(
-                    history["vwap"],
+                    history["close"],
                     color="orange",
                     linestyle="dashed",
                     panel=0,
                     secondary_y=True,
                 ),
                 mpf.make_addplot(
-                    history["predicted_vwap"],
+                    history["predicted_close"],
                     color="blue",
                     panel=0,
                     secondary_y=True,
