@@ -5,8 +5,6 @@ from typing import Dict
 from copy import deepcopy
 import pendulum
 
-from stock_predictor.stock_module.stock_charts import StockCharts
-
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 import pandas as pd
 import requests
@@ -16,7 +14,6 @@ from stock_predictor.stock_module.stock_news import StockNews
 from stock_predictor.stock_module.stock_openai_chat import StockOpenaiChat
 from stock_predictor.stock_module.stock_predictor import StockPredictor
 from stock_predictor.stock_module.stock_recommendations import StockRecommendations
-# from stock_predictor.stock_module.stock_technicals import StockTechnicals
 
 from stock_predictor.stock_module.slack import Slack
 
@@ -29,8 +26,6 @@ from dotenv import load_dotenv
 
 load_dotenv()
 console = Console()
-DEFAULT_AVG_REDUCTION = float(os.getenv("DEFAULT_AVG_REDUCTION", 0.20))
-
 
 yesterday = pendulum.now().subtract(days=1).to_date_string()
 past = pendulum.now().subtract(years=3).to_date_string()
@@ -101,7 +96,7 @@ class StockScreener:
                     status.update(
                         f"[magenta3]AI predicted [bold]{ticker}[/bold] will gain..."
                     )
-                    StockCharts().plot_prediction_chart(prediction_df)
+
                     predictions_df = pd.concat([predictions_df, prediction_df])
                     filtered_tickers.append(ticker)
                 else:
@@ -166,11 +161,6 @@ class StockScreener:
             pd.DataFrame: The filtered prediction dataframe.
 
         """
-        # history = FmpChartData(
-        #             symbol=ticker,
-        #             from_date=past,
-        #             to_date=yesterday,
-        #         )
         history = deepcopy(chart)
 
         copy_df = history.return_chart()
@@ -184,7 +174,6 @@ class StockScreener:
         pred_df = prediction_df.tail(4)
         prediction_max = round(pred_df.tail(3)["predicted_close"].max(), 2)
         current_close = round(pred_df["close"].iloc[0], 2)
-        # current_vwap = round(pred_df["vwap"].iloc[0], 2)
         future_goal = round(current_close * 1.03, 2)
         try:
             percentage_change = (
@@ -281,15 +270,7 @@ class StockScreener:
         Returns:
             bool: True if the stock passes the technical indicators filter, False otherwise.
         """
-        # history = FmpChartData(
-        #             symbol=ticker,
-        #             from_date=past,
-        #             to_date=yesterday,
-        #         )
         history = deepcopy(chart)
-        # history.vwap()
-        # history.sma(fast_period)
-        # history.sma(slow_period)
         history.rsi(fast_period)
         history.bb(fast_period, 2)
         history.waddah_attar_explosion(fast_period, slow_period, 20, 2.0, 150)
@@ -299,17 +280,13 @@ class StockScreener:
         if history_df.empty:
             return False
 
-        # Get the last row of the DataFrame
         prev_day = history_df.iloc[-1]
 
-        # Check the conditions in a single detailed conditional statement
         is_tradeable = (
             prev_day["wae_uptrend"] == 1
             and float(prev_day[f"rsi{fast_period}"]) < 70.0
             and prev_day[f"bb_h{fast_period}_ind"] == 0
             and prev_day[f"bb_l{fast_period}_ind"] == 0
-            # and prev_day[f"sma{fast_period}"] < prev_day["vwap"]
-            # and prev_day[f"sma{fast_period}"] > prev_day[f"sma{slow_period}"]
         )
 
         return is_tradeable
