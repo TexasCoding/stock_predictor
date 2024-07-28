@@ -36,7 +36,7 @@ yesterday = pendulum.now().subtract(days=1).to_date_string()
 past = pendulum.now().subtract(years=3).to_date_string()
 
 
-class StockScreener3:
+class StockScreener:
     def __init__(self) -> None:
         self.tickers = list(self._get_tickers())
 
