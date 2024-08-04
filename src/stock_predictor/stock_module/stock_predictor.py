@@ -99,7 +99,7 @@ class StockPredictor(StockBase):
     # Get the trained model
     ###############################################################
     @staticmethod
-    def get_trained_model(x_train, y_train):
+    def get_trained_model(x_train: pd.Series, y_train: pd.Series):
         """
         Trains and returns a stock prediction model.
 
@@ -115,7 +115,7 @@ class StockPredictor(StockBase):
 
         model = Sequential(
             [
-                Input(shape=(BATCH_SIZE, EPOCHS)),
+                Input(shape=(x_train.shape[1], x_train.shape[2])),
                 LSTM(60, return_sequences=True),
                 Dropout(0.3),
                 LSTM(120, return_sequences=False),
@@ -197,9 +197,12 @@ class StockPredictor(StockBase):
         y_predicted_transformed = np.append(y_predicted_transformed, last_seq)
         copy_df["predicted_close"] = y_predicted_transformed
 
-        date_now = self.calendar.future_dates.next_day1
-        date_tomorrow = self.calendar.future_dates.next_day2
-        date_after_tomorrow = self.calendar.future_dates.next_day3
+        date_now = pd.to_datetime(self.calendar.future_dates.next_day1)
+        date_tomorrow = pd.to_datetime(self.calendar.future_dates.next_day2)
+        date_after_tomorrow = pd.to_datetime(self.calendar.future_dates.next_day3)
+
+        copy_df["date"] = pd.to_datetime(copy_df["date"])
+        copy_df.index = pd.to_datetime(copy_df["date"])
 
         copy_df.loc[date_now] = [
             # copy_df["symbol"].iloc[-1],
@@ -210,7 +213,7 @@ class StockPredictor(StockBase):
             copy_df["close"].iloc[-1],
             copy_df["close"].iloc[-1],
             0,
-            f"{date_tomorrow}",
+            f"{date_now}",
             copy_df["symbol"].iloc[-1],
             0,
             predictions[0],
@@ -236,13 +239,10 @@ class StockPredictor(StockBase):
             copy_df["close"].iloc[-1],
             copy_df["close"].iloc[-1],
             0,
-            f"{date_tomorrow}",
+            f"{date_after_tomorrow}",
             copy_df["symbol"].iloc[-1],
             0,
             predictions[2],
         ]
-
-        copy_df["date"] = pd.to_datetime(copy_df["date"])
-        copy_df.index = pd.to_datetime(copy_df["date"])
 
         return copy_df

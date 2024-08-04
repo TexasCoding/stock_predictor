@@ -2,6 +2,10 @@ from stock_predictor.stock_module.stock_screener import StockScreener
 from stock_predictor.stock_module.stock_charts import StockCharts
 from rich.console import Console
 
+import warnings
+
+warnings.filterwarnings("ignore")
+
 
 def main():
     console = Console()

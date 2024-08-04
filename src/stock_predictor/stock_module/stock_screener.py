@@ -20,6 +20,7 @@ from stock_predictor.stock_module.slack import Slack
 
 from fmp_py.fmp_chart_data import FmpChartData
 from fmp_py.fmp_company_information import FmpCompanyInformation
+from fmp_py.fmp_earnings import FmpEarnings
 
 from rich.console import Console
 from dotenv import load_dotenv
@@ -28,7 +29,7 @@ load_dotenv()
 console = Console()
 
 yesterday = pendulum.now().subtract(days=1).to_date_string()
-past = pendulum.now().subtract(years=3).to_date_string()
+past = pendulum.now().subtract(years=4).to_date_string()
 
 
 class StockScreener:
@@ -50,13 +51,6 @@ class StockScreener:
     # Stock Screener
     ###############################################################
     def screener(self) -> pd.DataFrame:
-        """
-        Perform stock screening based on various filters and return a DataFrame of predicted stock gains.
-
-        Returns:
-            pd.DataFrame: DataFrame containing the predicted stock gains.
-        """
-
         tickers = self.tickers.copy()
         predictions_df = pd.DataFrame()
         start_count = len(tickers)
@@ -65,6 +59,12 @@ class StockScreener:
 
         with console.status("[bold green]Screening started...") as status:
             for ticker in tickers:
+                upcoming_earnings = FmpEarnings().next_earnings_date(
+                    symbol=ticker, weeks_ahead=2
+                )
+                if upcoming_earnings:
+                    print(f"{ticker} has earnings within the next 2 weeks.")
+                    continue
                 time.sleep(0.3)
                 chart = FmpChartData(
                     symbol=ticker,
@@ -77,15 +77,11 @@ class StockScreener:
                 )
                 start_count -= 1
 
-                if not self._filter_technicals(
-                    chart=chart, fast_period=20, slow_period=40
+                if not (
+                    self._filter_technicals(chart=chart, fast_period=20, slow_period=40)
+                    and self._filter_recommendations(ticker)
+                    and self._filter_news(ticker)
                 ):
-                    continue
-
-                if not self._filter_recommendations(ticker):
-                    continue
-
-                if not self._filter_news(ticker):
                     continue
 
                 status.update(
@@ -116,23 +112,6 @@ class StockScreener:
     # Add Predicted Trade to Database
     ###############################################################
     def _add_predicted_to_db(self, predicted_dict: Dict[str, str]) -> None:
-        """
-        Adds the predicted trade details to the database.
-
-        Args:
-            predicted_dict (Dict[str, str]): A dictionary containing the predicted trade details.
-                The dictionary should have the following keys:
-                - "symbol": The symbol of the stock.
-                - "open_price": The predicted open price of the stock.
-                - "take_price": The predicted take price of the stock.
-                - "percentage_change": The predicted percentage change of the stock.
-
-        Raises:
-            requests.HTTPError: If there is an error while making the POST request to the API.
-
-        Returns:
-            None
-        """
         response = requests.post(
             f"{BASE_URL}/predicted_trades",
             data=json.dumps(
@@ -150,17 +129,6 @@ class StockScreener:
     # Filter Prediction
     ###############################################################
     def _filter_prediction(self, ticker: str, chart: FmpChartData) -> pd.DataFrame:
-        """
-        Filters the prediction for a given stock ticker based on certain conditions.
-
-        Args:
-            ticker (str): The stock ticker symbol.
-            history_df (pd.DataFrame): The historical data for the stock.
-
-        Returns:
-            pd.DataFrame: The filtered prediction dataframe.
-
-        """
         history = deepcopy(chart)
 
         copy_df = history.return_chart()
@@ -271,8 +239,8 @@ class StockScreener:
             bool: True if the stock passes the technical indicators filter, False otherwise.
         """
         history = deepcopy(chart)
-        history.rsi(fast_period)
-        history.bb(fast_period, 2)
+        # history.rsi(fast_period)
+        # history.bb(fast_period, 2)
         history.waddah_attar_explosion(fast_period, slow_period, 20, 2.0, 150)
 
         history_df = history.return_chart()
@@ -284,9 +252,9 @@ class StockScreener:
 
         is_tradeable = (
             prev_day["wae_uptrend"] == 1
-            and float(prev_day[f"rsi{fast_period}"]) < 70.0
-            and prev_day[f"bb_h{fast_period}_ind"] == 0
-            and prev_day[f"bb_l{fast_period}_ind"] == 0
+            # and float(prev_day[f"rsi{fast_period}"]) < 70.0
+            # and prev_day[f"bb_h{fast_period}_ind"] == 0
+            # and prev_day[f"bb_l{fast_period}_ind"] == 0
         )
 
         return is_tradeable
