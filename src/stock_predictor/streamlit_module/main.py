@@ -21,7 +21,7 @@ from stock_predictor.stock_module.slack import Slack
 
 from fmp_py.fmp_chart_data import FmpChartData
 from fmp_py.fmp_company_information import FmpCompanyInformation
-
+from fmp_py.fmp_earnings import FmpEarnings
 from rich.console import Console
 from dotenv import load_dotenv
 
@@ -80,9 +80,6 @@ def filter_prediction(ticker: str, chart: FmpChartData) -> pd.DataFrame:
     if copy_df.empty:
         return pd.DataFrame()
 
-    fig = go.Figure()
-    st.write(fig)
-
     stock_predictor = StockPredictor(symbol=ticker, data_df=copy_df)
     prediction_df = stock_predictor.execute_model()
 
@@ -100,6 +97,23 @@ def filter_prediction(ticker: str, chart: FmpChartData) -> pd.DataFrame:
     if prediction_max >= future_goal:
         predicted_df = prediction_df.tail(50)
         take_profit = round(current_close + (prediction_max - current_close), 2)
+
+        add_predicted_to_db(
+            {
+                "symbol": ticker,
+                "open_price": current_close,
+                "take_price": take_profit,
+                "percentage_change": percentage_change,
+            }
+        )
+        message = f"{ticker} predicted for gains:\n Open Price: {current_close}\n Take Price: {take_profit}\n Percentage Change: {percentage_change}"
+
+        Slack().send_message(
+            channel="#app-development",
+            text=message,
+            username=os.getenv("SLACK_USERNAME"),
+        )
+
         fig = go.Figure(
             data=[
                 go.Candlestick(
@@ -130,24 +144,9 @@ def filter_prediction(ticker: str, chart: FmpChartData) -> pd.DataFrame:
         )
         fig.add_hline(y=take_profit, line_color="red", line_width=2)
         fig.add_hline(y=current_close, line_color="green", line_width=2)
-
-        add_predicted_to_db(
-            {
-                "symbol": ticker,
-                "open_price": current_close,
-                "take_price": take_profit,
-                "percentage_change": percentage_change,
-            }
-        )
-        message = f"{ticker} predicted for gains:\n Open Price: {current_close}\n Take Price: {take_profit}\n Percentage Change: {percentage_change}"
         st.write(fig)
 
-        Slack().send_message(
-            channel="#app-development",
-            text=message,
-            username=os.getenv("SLACK_USERNAME"),
-        )
-        return prediction_df.tail(50)
+        return predicted_df
     return pd.DataFrame()
 
 
@@ -227,6 +226,12 @@ def run_program():
             unsafe_allow_html=True,
         )
         start_count -= 1
+
+        upcoming_earnings = FmpEarnings().earnings_within_weeks(
+            symbol=ticker, weeks_ahead=2
+        )
+        if upcoming_earnings:
+            continue
 
         chart = FmpChartData(
             symbol=ticker,

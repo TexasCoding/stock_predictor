@@ -1,6 +1,5 @@
 import json
 import os
-import time
 from typing import Dict
 from copy import deepcopy
 import pendulum
@@ -59,13 +58,13 @@ class StockScreener:
 
         with console.status("[bold green]Screening started...") as status:
             for ticker in tickers:
-                upcoming_earnings = FmpEarnings().next_earnings_date(
+                upcoming_earnings = FmpEarnings().earnings_within_weeks(
                     symbol=ticker, weeks_ahead=2
                 )
                 if upcoming_earnings:
                     print(f"{ticker} has earnings within the next 2 weeks.")
                     continue
-                time.sleep(0.3)
+
                 chart = FmpChartData(
                     symbol=ticker,
                     from_date=past,
