@@ -2668,6 +2668,31 @@ files = [
 ]
 
 [[package]]
+name = "nixtla"
+version = "0.5.2"
+description = "Python SDK for Nixtla API (TimeGPT)"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "nixtla-0.5.2-py3-none-any.whl", hash = "sha256:08e9bc5239139f31168c583886017ee221cfb7db5ab251434ca86b9a4b131ee5"},
+    {file = "nixtla-0.5.2.tar.gz", hash = "sha256:791c68d315717f4e459276019d1b45d6b51d37d473db310bd86bb529a7647311"},
+]
+
+[package.dependencies]
+httpx = "*"
+pandas = "*"
+pydantic = "*"
+requests = "*"
+tenacity = "*"
+utilsforecast = ">=0.1.7"
+
+[package.extras]
+date-extras = ["holidays"]
+dev = ["black", "dask[dataframe]", "datasetsforecast", "fugue[ray] (>=0.8.7)", "hierarchicalforecast", "holidays", "jupyterlab", "nbdev", "neuralforecast", "plotly", "pre-commit", "pyreadr", "pyspark", "python-dotenv", "ray[serve-grpc]", "setuptools (<70)", "statsforecast", "utilsforecast[plotting] (>=0.1.7)"]
+distributed = ["dask[dataframe]", "fugue[ray] (>=0.8.7)", "pyspark", "ray[serve-grpc]"]
+plotting = ["utilsforecast[plotting] (>=0.1.7)"]
+
+[[package]]
 name = "nodeenv"
 version = "1.9.1"
 description = "Node.js virtual environment builder"
@@ -5184,6 +5209,27 @@ socks = ["pysocks (>=1.5.6,!=1.5.7,<2.0)"]
 zstd = ["zstandard (>=0.18.0)"]
 
 [[package]]
+name = "utilsforecast"
+version = "0.2.3"
+description = "Forecasting utilities"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "utilsforecast-0.2.3-py3-none-any.whl", hash = "sha256:780c11c43aec0d506b314a97d21ce94ca2bd24c4ed8e1db5df2eff2c25989b10"},
+    {file = "utilsforecast-0.2.3.tar.gz", hash = "sha256:c48859a69428628f1787a963599fcf980f9403c57db4b251955707a01af00131"},
+]
+
+[package.dependencies]
+numpy = "*"
+packaging = "*"
+pandas = ">=1.1.1"
+
+[package.extras]
+dev = ["datasetsforecast (==0.0.8)", "nbdev", "pandas[plot]", "plotly", "plotly-resampler", "polars[numpy]", "pyarrow", "scipy"]
+plotting = ["pandas[plot]", "plotly", "plotly-resampler"]
+polars = ["polars[numpy]"]
+
+[[package]]
 name = "uvicorn"
 version = "0.30.5"
 description = "The lightning-fast ASGI server."
@@ -5702,4 +5748,4 @@ repair = ["scipy (>=1.6.3)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "fedf5220ea01902e39c0da9f20422d06a8da8ef9ee1ff4bd145c51e479ec42f4"
+content-hash = "5f6b5afcd37b55986cd297e6f91eeac8b6e2153c91fd39687861ee5b445e9380"

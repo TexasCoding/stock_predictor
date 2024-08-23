@@ -4,11 +4,12 @@ from typing import Union
 import pandas as pd
 from stock_predictor.stock_module.stock_base import StockBase
 from fmp_py.fmp_company_information import FmpCompanyInformation
-from fmp_py.fmp_valuation import FmpValuation
+
+# from fmp_py.fmp_valuation import FmpValuation
 from fmp_py.fmp_statement_analysis import FmpStatementAnalysis
-from fmp_py.fmp_price_targets import FmpPriceTargets
-from fmp_py.fmp_quote import FmpQuote
-from fmp_py.fmp_upgrades_downgrades import FMPUpgradesDowngrades
+# from fmp_py.fmp_price_targets import FmpPriceTargets
+# from fmp_py.fmp_quote import FmpQuote
+# from fmp_py.fmp_upgrades_downgrades import FMPUpgradesDowngrades
 
 DEFAULT_PREVIOUS_MONTHS = 2
 
@@ -90,14 +91,14 @@ class StockRecommendations(StockBase):
                 FmpCompanyInformation().analyst_recommendations(symbol).iloc[0]
             )
             scores = FmpStatementAnalysis().financial_score(symbol=symbol)
-            targets = FmpPriceTargets().price_target_consensus(symbol=symbol)
-            quote = FmpQuote().simple_quote(symbol=symbol)
-            rating = FmpValuation().company_rating(symbol).rating_score
-            consensus = (
-                FMPUpgradesDowngrades()
-                .upgrades_downgrades_consensus(symbol)
-                .consensus.lower()
-            )
+            # targets = FmpPriceTargets().price_target_consensus(symbol=symbol)
+            # quote = FmpQuote().simple_quote(symbol=symbol)
+            # rating = FmpValuation().company_rating(symbol).rating_score
+            # consensus = (
+            #     FMPUpgradesDowngrades()
+            #     .upgrades_downgrades_consensus(symbol)
+            #     .consensus.lower()
+            # )
         except ValueError:
             return "NEUTRAL"
 
@@ -111,14 +112,14 @@ class StockRecommendations(StockBase):
             + recommendations["analyst_ratings_hold"]
         )
 
-        if (buy_sum == 0 and sell_sum == 0) or rating < 4 or scores.piotroski_score < 5:
+        if (buy_sum == 0 and sell_sum == 0) or scores.piotroski_score < 5:
             return "NEUTRAL"
         if (
             (buy_sum > sell_sum)
-            and rating >= 4
+            # and rating >= 4
             and scores.piotroski_score >= 5
-            and targets.target_consensus > quote.price
-            and consensus in ["buy", "strong buy"]
+            # and targets.target_consensus > quote.price
+            # and consensus in ["buy", "strong buy"]
         ):
             return "BULLISH"
         else:

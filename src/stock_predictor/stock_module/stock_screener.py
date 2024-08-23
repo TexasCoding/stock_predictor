@@ -21,13 +21,15 @@ from fmp_py.fmp_chart_data import FmpChartData
 from fmp_py.fmp_company_information import FmpCompanyInformation
 from fmp_py.fmp_earnings import FmpEarnings
 
+from nixtla import NixtlaClient
+
 from rich.console import Console
 from dotenv import load_dotenv
 
 load_dotenv()
 console = Console()
 
-yesterday = pendulum.now().subtract(days=1).to_date_string()
+yesterday = pendulum.now().to_date_string()
 past = pendulum.now().subtract(years=4).to_date_string()
 
 
@@ -37,14 +39,72 @@ class StockScreener:
 
     def _get_tickers(self) -> list:
         screened = FmpCompanyInformation().stock_screener(
-            market_cap_more_than=100000000,
-            price_lower_than=300,
+            market_cap_more_than=500_000_000,
+            price_lower_than=600,
             limit=10000,
             volume_more_than=200000,
             is_actively_trading=True,
         )
 
         return screened["symbol"].tolist()
+
+    def _nixtla_prediction(self, chart: FmpChartData, symbol: str) -> pd.DataFrame:
+        history = deepcopy(chart)
+
+        copy_df = history.return_chart()
+
+        nixtla_client = NixtlaClient(
+            api_key=os.getenv("NIXTLA_API_KEY"),
+        )
+
+        nix_df = copy_df.copy()
+        nix_df["date"] = pd.to_datetime(nix_df.index)
+
+        nix_df = nix_df[["date", "close"]]
+
+        nixtla_forcast_df = nixtla_client.forecast(
+            df=nix_df,
+            h=4,
+            target_col="close",
+            time_col="date",
+            freq="B",
+        )
+
+        nixtla_forcast_df.index = pd.to_datetime(nixtla_forcast_df["date"])
+
+        final_df = pd.concat([copy_df, nixtla_forcast_df], axis=1)
+        final_df.drop(columns=["date"], inplace=True)
+
+        pred_df = final_df.tail(5)
+        prediction_max = round(pred_df.tail(4)["TimeGPT"].max(), 2)
+        current_close = round(pred_df["close"].iloc[-5], 2)
+        future_goal = round(current_close * 1.03, 2)
+        try:
+            percentage_change = (
+                round((prediction_max - current_close) / current_close, 2) * 100
+            )
+        except ZeroDivisionError:
+            percentage_change = 0
+
+        if prediction_max >= future_goal:
+            self._add_predicted_to_db(
+                {
+                    "symbol": symbol,
+                    "open_price": current_close,
+                    "take_price": round(
+                        current_close + (prediction_max - current_close), 2
+                    ),
+                    "percentage_change": percentage_change,
+                }
+            )
+            message = f"{symbol} predicted for gains:\n Open Price: {current_close}\n Take Price: {round(current_close + (prediction_max - current_close), 2)}\n Percentage Change: {percentage_change}"
+            Slack().send_message(
+                channel="#app-development",
+                text=message,
+                username=os.getenv("SLACK_USERNAME"),
+            )
+            return final_df.tail(100)
+        return pd.DataFrame()
 
     ###############################################################
     # Stock Screener
@@ -58,11 +118,15 @@ class StockScreener:
 
         with console.status("[bold green]Screening started...") as status:
             for ticker in tickers:
+                status.update(
+                    f"[green1]Screening [bold]{ticker}[/bold], ([bright_magenta]{start_count}[/bright_magenta]) remaining stocks..."
+                )
+                start_count -= 1
+
                 upcoming_earnings = FmpEarnings().earnings_within_weeks(
                     symbol=ticker, weeks_ahead=2
                 )
                 if upcoming_earnings:
-                    print(f"{ticker} has earnings within the next 2 weeks.")
                     continue
 
                 chart = FmpChartData(
@@ -70,11 +134,6 @@ class StockScreener:
                     from_date=past,
                     to_date=yesterday,
                 )
-
-                status.update(
-                    f"[green1]Screening [bold]{ticker}[/bold], ([bright_magenta]{start_count}[/bright_magenta]) remaining stocks..."
-                )
-                start_count -= 1
 
                 if not (
                     self._filter_technicals(chart=chart, fast_period=20, slow_period=40)
@@ -86,7 +145,9 @@ class StockScreener:
                 status.update(
                     f"[bright_cyan]AI predicting [bold]{ticker}[/bold] for future gains..."
                 )
-                prediction_df = self._filter_prediction(ticker, chart)
+
+                prediction_df = self._nixtla_prediction(chart, ticker)
+                # prediction_df = self._filter_prediction(ticker, chart)
                 if not prediction_df.empty:
                     status.update(
                         f"[magenta3]AI predicted [bold]{ticker}[/bold] will gain..."
@@ -238,9 +299,9 @@ class StockScreener:
             bool: True if the stock passes the technical indicators filter, False otherwise.
         """
         history = deepcopy(chart)
-        # history.rsi(fast_period)
-        # history.bb(fast_period, 2)
-        history.waddah_attar_explosion(fast_period, slow_period, 20, 2.0, 150)
+        history.rsi(fast_period)
+        history.bb(fast_period, 2)
+        # history.waddah_attar_explosion(fast_period, slow_period, 20, 2.0, 150)
 
         history_df = history.return_chart()
 
@@ -250,10 +311,10 @@ class StockScreener:
         prev_day = history_df.iloc[-1]
 
         is_tradeable = (
-            prev_day["wae_uptrend"] == 1
-            # and float(prev_day[f"rsi{fast_period}"]) < 70.0
+            # prev_day["wae_uptrend"] == 1
+            float(prev_day[f"rsi{fast_period}"]) < 30.0
             # and prev_day[f"bb_h{fast_period}_ind"] == 0
-            # and prev_day[f"bb_l{fast_period}_ind"] == 0
+            or prev_day["bb_lband_ind"] == 1
         )
 
         return is_tradeable

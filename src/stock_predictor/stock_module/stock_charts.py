@@ -29,7 +29,7 @@ class StockCharts:
                     secondary_y=True,
                 ),
                 mpf.make_addplot(
-                    history["predicted_close"],
+                    history["TimeGPT"],
                     color="blue",
                     panel=0,
                     secondary_y=True,
